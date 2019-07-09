@@ -14,7 +14,7 @@ class Evaluator:
         assignedClasses = defaultdict(list) #Dictionary mit Klassen als key und Liste von Geschichten als Value 
         for story in self.corpus: #benutzt __iter__ in Klasse Corpus 
             numberOfStories += 1
-            category = self.classifier.classify(story) #waehle Kategorie 
+            category = self.classifier.dumb_classify(story) #waehle Kategorie 
             assignedClasses[category].append(story)
         for (className, stories) in assignedClasses.items(): 
             for story in stories: 
