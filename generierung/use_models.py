@@ -1,5 +1,3 @@
-# OLD NAME: usemodels_version1.1
-
 from random import randint
 from pickle import load
 from keras.models import load_model
@@ -9,12 +7,11 @@ from keras.preprocessing.sequence import pad_sequences
 # load doc into memory (training data sequences)
 def load_doc(filename):
     # open the file as read only
-    file = open(filename, 'r')
-    # read all text
-    text = file.read()
-    # close the file
-    file.close()
-    return text
+    with open(filename, "r") as file:
+        # read all text
+        text = file.read()
+        # close the file
+        return text
 
 
 # generate a sequence from a language model
@@ -44,8 +41,49 @@ def generate_seq(model, tokenizer, seq_length, seed_text, n_words):
 
 
 # load cleaned text sequences
-language = input("Enter a language: ")
-kind = input("Please choose one of the following: \n animaltales \n magictales \n religioustales \n realistictales \n stupidogre \n jokes \n formulatales")
+while True:
+    l = input("Enter a language: [E]nglish   [G]erman")
+    if l == "E":
+        language = "english"
+    elif l == "G":
+        language = "german"
+    else:
+        print("Wrong parameter specification!\nPlease try again.")
+        continue
+    while True:
+        k = input("Please choose one of the following: [A]nimaltales [M]agictales    [R]eligioustales    "
+                     "[r]ealistictales  [S]tupidogre    [J]okes [F]ormulatales  [Z]urück")
+        if k == "A":
+            kind = "animaltales"
+            break
+        elif k == "M":
+            kind = "magictales"
+            break
+        elif k == "R":
+            kind = "religioustales"
+            break
+        elif k == "r":
+            kind = "realistictales"
+            break
+        elif k == "S":
+            kind = "stupidogre"
+            break
+        elif k == "J":
+            kind = "jokes"
+            break
+        elif k == "F":
+            kind = "formulatales"
+            break
+        elif k == "Z":
+            break
+        else:
+            print("Wrong parameter specification!\nPlease try again.")
+    if k == "Z":
+        continue
+    else:
+        break
+
+
 in_filename = "sequence/" + language.lower() + "_" + kind.lower() + "_sequences.txt"
 doc = load_doc(in_filename)
 lines = doc.split('\n')
@@ -55,14 +93,14 @@ lines = doc.split('\n')
 seq_length = len(lines[0].split()) - 1
 
 # load the model
-model = load_model('models/model' + in_filename +'.h5')
+model = load_model('generated_model.h5')
 
 # load the tokenizer
-tokenizer = load(open('tokenizer/tokenizer' + in_filename + '.pkl', 'rb'))
+tokenizer = load(open('tokenizer_generated_model.pkl', 'rb'))
 
 # select a seed text: random line of text from the input text
 # maybe the first line?
-seed_text = lines[randint(0,len(lines))]
+seed_text = lines[randint(0, len(lines))]
 print(seed_text + '\n')
 
 # generate new text

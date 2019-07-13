@@ -2,23 +2,24 @@
 
 import string
 import re
+import os
 
 
 # load doc into memory
 def load_doc(filename):
     # open the file as read only
-    file = open(filename, 'r',encoding = 'utf-8')
-    # read all text
-    text = file.read()
-    # close the file
-    file.close()
-    return text
+    with open(filename, "r", encoding="utf-8") as file:
+        # read all text
+        text = file.read()
+        # close the file
+        return text
 
 
 # turn a doc into clean tokens
 def clean_doc(doc):
     # replace '--' with a space ' '
     doc = doc.replace('--', ' ')
+    doc = doc.replace("&#039;", "\'")
     # split into tokens by white space
     tokens = doc.split()
     # prepare regex for char filtering
@@ -28,7 +29,8 @@ def clean_doc(doc):
     # remove remaining tokens that are not alphabetic
     tokens = [word for word in tokens if word.isalpha()]
     # remove html Tags <p> and <br>
-    tokens = [word for word in tokens if word != 'p' and word != 'br']
+    tags = re.compile('<.*?>')
+    tokens = [tags.sub("", w) for w in tokens]
     # make lower case
     tokens = [word.lower() for word in tokens]
     return tokens
@@ -80,6 +82,9 @@ realisticseq = load_tales("clean/" + language + '_'+'realistictales_clean.txt')
 stupidogreseq = load_tales("clean/" + language + '_'+'stupidogre_clean.txt')
 jokesseq = load_tales("clean/" + language + '_'+'jokes_clean.txt')
 formulaseq = load_tales("clean/" + language + '_'+'formulatales_clean.txt')
+
+if not os.path.isdir("sequence"):
+    os.makedirs("sequence")
 
 # save sequences to files
 out_filename1 = "sequence/" + language + '_'+'animaltales_sequences.txt'
