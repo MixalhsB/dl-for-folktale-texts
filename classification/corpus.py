@@ -3,79 +3,89 @@
 import ast
 import numpy as np
 import random
+import keras
+from nltk.corpus import stopwords
 from bs4 import BeautifulSoup
-from keras.preprocessing.text import text_to_word_sequence
+from keras.preprocessing.text import text_to_word_sequence, Tokenizer
+from keras.models import Sequential
+from keras.layers import Dense, Dropout, Activation
+
 
 class Corpus:
+
     def __init__(self, filename, language):
+        # self.stop_words = stopwords.words(language)
+        # DEBUG:
+        self.stop_words = []
+
         with open(filename, 'r', encoding='utf-8') as f:
             dict_syntaxed_string = f.read()
-        
+
         self.stories = ast.literal_eval(dict_syntaxed_string)[language]
         random.seed(123)
         random.shuffle(self.stories)
-        
+
         self.class_names = ('animal', 'magic', 'religious', 'realistic', 'orge', 'jokes', 'formula', 'UNKNOWN')
-        
-        def give_number(atu_string):
+
+        def _get_number(atu_string):
             try:
                 return int(''.join(char for char in atu_string if char.isdigit()))
             except ValueError:
                 return -1
-        
-        def give_atu_range(class_name):
+
+        def _get_atu_range(class_name):
             if class_name == 'animal':
-                return (1, 299)
+                return 1, 299
             elif class_name == 'magic':
-                return (300, 749)
+                return 300, 749
             elif class_name == 'religious':
-                return (750, 849)
+                return 750, 849
             elif class_name == 'realistic':
-                return (850, 999)
+                return 850, 999
             elif class_name == 'orge':
-                return (1000, 1199)
+                return 1000, 1199
             elif class_name == 'jokes':
-                return (1200, 1999)
+                return 1200, 1999
             elif class_name == 'formula':
-                return (2000, 2399)
+                return 2000, 2399
             else:
                 assert False
-        
-        def is_atu_in_range(atu_string, class_name):
+
+        def _is_atu_in_range(atu_string, class_name):
             try:
-                minimum, maximum = give_atu_range(class_name)
-                return minimum <= give_number(atu_string) <= maximum
+                minimum, maximum = _get_atu_range(class_name)
+                return minimum <= _get_number(atu_string) <= maximum
             except AssertionError:
                 return True
-        
-        def give_stories_of_class(class_name):
-            return [story for story in self.stories if is_atu_in_range(story[2], class_name)]
-        
-        iter_over_class_specific_subsets = (give_stories_of_class(class_name) for class_name in self.class_names)
-        
-        self.gold_classes = {class_name: stories for class_name, stories in zip(self.class_names, iter_over_class_specific_subsets)}
-        
+
+        def _get_stories_of_class(class_name):
+            return [story for story in self.stories if _is_atu_in_range(story[2], class_name)]
+
+        iter_over_class_specific_subsets = (_get_stories_of_class(class_name) for class_name in self.class_names)
+
+        self.gold_classes = {class_name: stories for class_name, stories in
+                             zip(self.class_names, iter_over_class_specific_subsets)}
+
         self.w2i_dict = self.get_word_to_index_dict()
-        
+
+        self.simple_reuters_model = None
+
     def __iter__(self):
         return iter(self.stories)
 
-    @staticmethod
-    def extract_word_sequence(story):
+    def extract_word_sequence(self, story):
         html_text = story[4]
         raw_text = BeautifulSoup(html_text, "html.parser").text
-        result = text_to_word_sequence(raw_text)
-        return result
+        return [word for word in text_to_word_sequence(raw_text) if word not in self.stop_words]
 
     def get_word_occurrences(self):
         result = []
         for story in self.stories:
             result += self.extract_word_sequence(story)
         return result
-    
+
     def get_word_frequencies(self):
         word_occurrences = self.get_word_occurrences()
-        all_words = set(word_occurrences)
         result = {}
         for word in word_occurrences:
             if word in result:
@@ -83,23 +93,20 @@ class Corpus:
             else:
                 result[word] = 1
         return result
-    
+
     def get_index_to_word_list(self):
         word_frequencies = self.get_word_frequencies()
-        result = reversed(sorted(word_frequencies, key=lambda x: word_frequencies[x]))
-        return result
-    
+        return reversed(sorted(word_frequencies, key=lambda x: word_frequencies[x]))
+
     def get_word_to_index_dict(self):
         i2w_list = self.get_index_to_word_list()
-        result = {word: index for index, word in enumerate(i2w_list)}
-        return result
-    
-    def yield_index_list_representation(self, story):
+        return {word: index for index, word in enumerate(i2w_list)}
+
+    def get_index_list_representation(self, story):
         word_sequence = self.extract_word_sequence(story)
-        result = [self.w2i_dict[word] for word in word_sequence]
-        return result
-    
-    def yield_gold_class(self, story):
+        return [self.w2i_dict[word] for word in word_sequence]
+
+    def get_gold_class(self, story):
         this_story_id = story[1]
         for class_name in self.class_names:
             for any_story in self.gold_classes[class_name]:
@@ -108,18 +115,47 @@ class Corpus:
                     return class_name
         return 'UNKNOWN'
 
-    def yield_train_and_test_data(self, test_split=0.2):
-        assert 0.0 < test_split < 1.0
+    def get_train_and_test_data(self, test_split=0.2):
+        # assert 0.0 < test_split < 1.0
         x_y_test_length = int(test_split * len(self.stories))
-        assert 0 < x_y_test_length < len(self.stories)
+        # assert 0 < x_y_test_length < len(self.stories)
         test_stories = self.stories[:x_y_test_length]
         train_stories = self.stories[x_y_test_length:]
-        
-        x_test = [self.yield_index_list_representation(story) for story in test_stories]
-        x_train = [self.yield_index_list_representation(story) for story in train_stories]
-        
-        y_test = [self.class_names.index(self.yield_gold_class(story)) for story in test_stories]
-        y_train = [self.class_names.index(self.yield_gold_class(story)) for story in train_stories]
-        
-        result = ((x_train, y_train), (x_test, y_test))
-        return result
+
+        x_test = np.array([self.get_index_list_representation(story) for story in test_stories])
+        x_train = np.array([self.get_index_list_representation(story) for story in train_stories])
+
+        y_test = np.array([self.class_names.index(self.get_gold_class(story)) for story in test_stories])
+        y_train = np.array([self.class_names.index(self.get_gold_class(story)) for story in train_stories])
+
+        return (x_train, y_train), (x_test, y_test)
+
+    def get_binary_transformed_train_and_test_data(self, test_split=0.2, max_words=10000):
+        (x_train, y_train), (x_test, y_test) = self.get_train_and_test_data(test_split=test_split)
+        tokenizer = Tokenizer(num_words=max_words)
+        bin_x_train = tokenizer.sequences_to_matrix(x_train, mode='binary')
+        bin_x_test = tokenizer.sequences_to_matrix(x_test, mode='binary')
+        bin_y_train = keras.utils.to_categorical(y_train, len(self.class_names))
+        bin_y_test = keras.utils.to_categorical(y_test, len(self.class_names))
+        return (bin_x_train, bin_y_train), (bin_x_test, bin_y_test)
+
+    def get_trained_model_for_simple_reuters_classifier(self):
+        if self.simple_reuters_model is None:
+            test_split = 0.2
+            max_words = 10000
+
+            model = Sequential()
+            model.add(Dense(512, input_shape=(max_words, )))
+            model.add(Activation('relu'))
+            model.add(Dropout(0.5))
+            model.add(Dense(len(self.class_names)))
+            model.add(Activation('softmax'))
+
+            model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+            binary_transformed_data = self.get_binary_transformed_train_and_test_data(test_split, max_words)
+            (bin_x_train, bin_y_train), (bin_x_test, bin_y_test) = binary_transformed_data
+            model.fit(bin_x_train, bin_y_train, batch_size=32, epochs=2, verbose=1, validation_split=0.1)
+            self.simple_reuters_model = model
+
+        return self.simple_reuters_model
