@@ -1,381 +1,135 @@
-# OLD NAME: atu_crawler_version4.3
-
-__author__ = 'Simon'
-import requests #ein Modul um Websites zu laden und querys durchzuführen
-import sys
-import re
-import urllib.parse #eine Modulfunktion um URL strings in seine Komponenten aufzuteilen oder URL componenten zu einem URL string zu verbinden #google
-from time import sleep #Programm soll für n Sekunden schlafen
-#from corpus_classes import Story
-from collections import *
-import os
+from collections import defaultdict
 
 class Story:
 
-    def __init__(self):
-        #(Titel,Datenbanknummer,ATU Nummer,Sprache,Text)
-        self.story = ()
+	def __init__(self, title, index, atu_type, language, text):
+		#(Titel,Datenbanknummer,ATU Nummer,Sprache,Text)
+		self.title = title
+		self.index = index
+		self.atu_type = atu_type
+		self.language = language
+		self.text = text
 
-    def set_title(self,title):
-        self.story += (title,) #(...,) --> damit es als tupel addiert wird
-
-    def set_id(self,index):
-        self.story += (int(index),)
-
-    def set_atu_type(self,atu_type):
-        self.story += (atu_type,)
-
-    def set_language(self,language):
-        self.story += (language,)
-
-    def set_text(self,text):
-        self.story += (text,)
+	def __str__(self):
+		# für backwardscompatibility
+		return str((self.title, self.index, self.atu_type, self.language, self.text))
 
 
+def read_corpus(path):
+	with open(path, "r", encoding = 'utf-8') as f:
+		s = f.readline()
+		data = eval(s.replace("<class 'list'>", 'list')) # für defaultdict typen
+		return data
 
-
-
-        
-def get_story(link, corpus_language):
-    global num_matching_errors
-    print('Trying to get a story from: ' + link)
-    result = Story() #result ist eine Instanz der Klasse Story
-
-    text_re = re.compile(r'id=story>(?:<p.*?>)?(.*?)</div>')
-    id_re = re.compile(r'id=([0-9]+)')
-    title_re = re.compile(r'<TITLE>(.*?) - MFtD<')
-    atu_re = re.compile(r'\(ATU.*?([0-9]+?[A-Z]?)\)')
+def write(path, content):
+	with open("clean/" + path + '_clean.txt',"w+",encoding = 'utf-8') as f:
+		# schreibe Titel und Text in einzelnene Zeilen separiert durch Leerzeile
+		for story in content:
+			f.write(story.title)
+			f.write('\n')
+			f.write(story.text)
+			f.write('\n\n')
 
 
 
-###Test ob die Seite überhaupt geladen werden kann###
-    
-    successful = False
-    n = 1
-    while(not successful and n <= 61):
-        try:
-            r = requests.get(link) #lade einen Link, vom Objekt r kann man jetzt Informationen lesen
-            successful = True #es kommt keine Fehlermeldung -> successful
-        except requests.exceptions.ConnectionError: #Netzwerkproblem
-            print('Sleeping for ' + str(n) + ' seconds ...')
-            sleep(n) #das Programm macht für n Sekunden eine Pause
-            n += 5
-    if (not successful or r.status_code != 200): #Status Code 200 bedeutet korrekte Anfrage,keine Fehler (vgl. 404)
-        print('Could not access: '+link)
-        return None
 
-#########################################################
+if __name__ == "__main__":
 
-    try:
-        r.encoding = 'utf-8' #Zeichenkodierung der Daten ist einheitlich UTF8
-        title = title_re.findall(r.text)[0]
-        #r.text : Requests dekodiert automatisch den Inhalt der Antwort vom Server
-        #mit dem regulären Ausdruck für Titel wird der Titel als String herausgesucht (als 1. Element einer Liste)
+	## Initialisierung
+
+	corpora = defaultdict(list) #Dictionary mit Sprachen als keys und Korpora als Werte
+	corpora_no_atu = defaultdict(list)
+	num_matching_errors = 0
+
+	unknowntexts = defaultdict(list)
+	animaltales =  defaultdict(list)
+	magictales =  defaultdict(list)
+	religioustales =  defaultdict(list)
+	realistictales =  defaultdict(list)
+	stupidogre =  defaultdict(list)
+	jokes =  defaultdict(list)
+	formulatales =  defaultdict(list)
 
 
-        #result soll ein Tupel der Form (Titel,Datenbanknummer,ATU Nummer,Sprache,Text) werden
-        #deswegen habe ich hier die Reihenfolge, in der die Methoden aufgerufen werden,leicht geändert
-        
-        result.set_title(title) #es gibt eine Klassenmethode set_title
+	counter = 0
+	unknowncounter = 0
+	animallen = 0
+	magiclen = 0
+	religiouslen = 0
+	realisticlen = 0
+	stupidogrelen = 0
+	jokeslen = 0
+	formulalen = 0
 
-        index = id_re.findall(link)[0] #sucht die ID
-        
-        result.set_id(index) #es gibt eine Klassenmethode set_id
 
-        
+	# corpora = read_corpus('corpora.txt')
+	# corpora_no_atu = read_corpus('corpora_no_atu')
+	corpora_default = read_corpus('corpora.txt')
+	for language in corpora_default:
+		for story in corpora_default[language]:
+			story = Story(story[0],story[1],story[2],story[3],story[4])
+			
+			if story.atu_type == 'UNKNOWN':
+				corpora_no_atu[language].append(str(story))
+				unknowncounter += 1
+				unknowntexts[language].append(story)
+			else:
+				corpora[language].append(str(story))
 
-        
+				try:
+					atu = int(story.atu_type)
+				except ValueError:
+					atu = int(story.atu_type[:-1])
+				
+				#1-299 Animal
+				#300-749 Magic
+				#750-849 Religion
+				#850-999 Realistic
+				#1000-1199 Stupid Ogre
+				#1200-1999 Jokes
+				#2000-2399 formula tales
 
-        atu_candidate = atu_re.findall(r.text) #sucht nach der ATU Nummer
-        
-        if len(atu_candidate) > 1:
-            #print("Error: Multiple possible ATU story types identified! Story: "+str(id)+", Candidate list: "+str(atu_candidate))
-            atu_number = atu_candidate[0]
-        elif len(atu_candidate) == 1:
-            atu_number = atu_candidate[0]
-        else:
-            atu_number = 'UNKNOWN'
-        result.set_atu_type(atu_number) #es gibt eine Klassenmethode set_atu_type
+				if 1 <= atu <= 299:
 
-        result.set_language(corpus_language) #es gibt eine Klassenmethode set_language
+					animaltales[language].append(story)
+					animallen += len(story.text.split())
 
-        text = text_re.findall(r.text)[0] #sucht den Text
-        result.set_text(text) #es gibt eine Klassenmethode set_text
-        
-    except IndexError: #bei der Anfrage [0] wird ein Index Error geworfen, mind. ein regex hat nicht gematched
-        num_matching_errors += 1
-        return None
-    return result.story #ein 5-stelliges Tupel mit den Inhalten
-    #Titel,ID,ATU,Sprache,Text
+				elif 300 <= atu <= 749:
+					magictales[language].append(story)
+					magiclen += len(story.text.split())
 
-i = 0
+				elif 750 <= atu <= 849:
+					religioustales[language].append(story)
+					religiouslen += len(story.text.split())
 
-def get_corpus(link, language):
-    global num_matching_errors
-    global i
+				elif 850 <= atu <= 999:
+					realistictales[language].append(story)
+					realisticlen += len(story.text.split())
 
-    
+				elif 1000 <= atu <= 1199:
+					stupidogre[language].append(story)
+					stupidogrelen += len(story.text.split())
 
-    corpus = []
-    story_link_re = re.compile(r'href=\'(.*action=story.*?)\'>') #Jedes Märchen enthält den action=story Teil
-    next_page_link_re = re.compile(r'href=\'(.*?)\'>volgende') #bringt uns zum nächsten Märchen
+				elif 1200 <= atu <= 1999:
+					jokes[language].append(story)
+					jokeslen += len(story.text.split())
 
-###Test ob link gelanden werden kann###
-    successful = False
-    n = 1
-    while(not successful and n <= 61):
-        try:
-            r = requests.get(link) #der Link zu allen Märchen einer Sprache wird geladen
-            successful = True
-        except requests.exceptions.ConnectionError:
-            print('Sleeping happened ...')
-            sleep(n)
-            n += 5
-    if (not successful or r.status_code != 200):
-        print('Could not access: '+link)
-        return corpus #leere Liste, falls ConnectionError
+				elif 2000 <= atu <= 2399:
+					formulatales[language].append(story)
+					formulalen += len(story.text.split())
 
-###
 
-    story_links = story_link_re.findall(r.text) #sucht nach story_link_re
-    #Liste von relativen URLS
-    
-    for rel_link in story_links:
-        abs_link = urllib.parse.urljoin('http://www.mftd.org', rel_link)
-        #ergibt eine vollständige URL / kombiniert eine base URL mit einer anderen URL
-        
-        s = get_story(abs_link, language) #obige Funktion wird aufgerufen
-        if s != None:
-            corpus.append(s) #das result (Objekt von Story()) wird in die corpus Liste aufgenommen
-            i += 1
-    next_page_link = next_page_link_re.findall(r.text) #sucht nach next_page_link
-    
-    assert(len(next_page_link) <= 1) #es soll entweder kein oder 1 next_page_link gefunden werden
-    #wenn das nicht so ist kommt ein AssertionError
+		write(language + '_animaltales' , animaltales[language])
+		write(language + '_magictales' , magictales[language])
+		write(language + '_religioustales' , religioustales[language])
+		write(language + '_stupidogre' , stupidogre[language])
+		write(language + '_jokes' , jokes[language])
+		write(language + '_formulatales' , formulatales[language])
+		write(language + '_unknowntexts' , unknowntexts[language])
+		
 
-    #für Testzwecke das i -> wie viele Märchen sollen geladen werden
-    #while i != 0:
+		with open('clean/' + language + '_corpora.txt', 'w+', encoding='utf-8') as f:
+			f.write(str(corpora[language]))
 
-        #i -= 1
-    
-    if len(next_page_link) == 1:
-        rel_np_link = next_page_link[0]
-        abs_np_link = urllib.parse.urljoin('http://www.mftd.org', rel_np_link)
-        corpus += get_corpus(abs_np_link, language) #get_corpus ruft sich selbst mit einem neuen Link auf
-            
-
-    return corpus #Liste von results
-
-def main(mode, filename=None):
-    #Links zu den Daten, nach Sprache sortiert
-    
-    czech_link = 'http://www.mftd.org/index.php?action=browse&langname=Czech'
-    danish_link = 'http://www.mftd.org/index.php?action=browse&langname=Danish'
-    dutch_link = 'http://www.mftd.org/index.php?action=browse&langname=Dutch'
-    english_link = 'http://www.mftd.org/index.php?action=browse&langname=English'
-    french_link = 'http://www.mftd.org/index.php?action=browse&langname=French'
-    german_link = 'http://www.mftd.org/index.php?action=browse&langname=German'
-    hungarian_link = 'http://www.mftd.org/index.php?action=browse&langname=Hungarian'
-    italian_link = 'http://www.mftd.org/index.php?action=browse&langname=Italian'
-    polish_link = 'http://www.mftd.org/index.php?action=browse&langname=Polish'
-    russian_link = 'http://www.mftd.org/index.php?action=browse&langname=Russian'
-    spanish_link = 'http://www.mftd.org/index.php?action=browse&langname=Spanish'
-    
-    def counter_and_categories_mode():
-        corpora = defaultdict(list) #Dictionary mit Sprachen als keys und Korpora als Werte
-        corpora_no_atu = defaultdict(list)
-        num_matching_errors = 0 
-        
-        unknowntexts = defaultdict(list)
-        animaltales =  defaultdict(list)
-        magictales =  defaultdict(list)
-        religioustales =  defaultdict(list)
-        realistictales =  defaultdict(list)
-        stupidogre =  defaultdict(list)
-        jokes =  defaultdict(list)
-        formulatales =  defaultdict(list)
-        
-        for link in [german_link]: #[english_link, french_link, german_link, italian_link, spanish_link]:  # [czech_link, danish_link, dutch_link, english_link, french_link, german_link, hungarian_link, italian_link, polish_link, russian_link, spanish_link]:
-            counter = 0
-            unknowncounter = 0
-            animallen = 0
-            magiclen = 0
-            religiouslen = 0
-            realisticlen = 0
-            stupidogrelen = 0
-            jokeslen = 0
-            formulalen = 0
-            
-            language = link.split('=')[-1].lower() #am Ende des Links steht immer die Sprache
-        ##        #Erstelle pro Sprache einen Ordner in dem die Märchen gespeichert werden sollen:
-        ##        dirName = language
-        ##        if not os.path.exists(dirName):
-        ##            os.mkdir(dirName)
-        ##            print("Directory " , dirName ,  " created ")
-        ##        else:    
-        ##            print("Directory " , dirName ,  " already exists")
-                
-            print('Processing Folktales in: '+language+'...')
-            corpus = get_corpus(link, language)
-            for story in corpus:
-                if story[2] != 'UNKNOWN':
-                    corpora[language].append(story)
-                    counter +=1
-                    #(Titel,Datenbanknummer,ATU Nummer,Sprache,Text)
-
-        #1-299 Animal
-        #300-749 Magic
-        #750-849 Religion
-        #850-999 Realistic
-        #1000-1199 Stupid Ogre
-        #1200-1999 Jokes
-        #2000-2399 formula tales
-
-                    try:
-                        atu = int(story[2]) 
-
-                    except ValueError: #manche ATUs enthalten zum Schluss einen Buchstaben wie A/B
-
-                        atu = int(story[2][:-1])
-
-                    if 1 <= atu <= 299:
-
-                        animaltales[language].append(story[4])
-                        animallen += len(story[4].split())
-
-                    elif 300 <= atu <= 749:
-                        magictales[language].append(story[4])
-                        magiclen += len(story[4].split())
-
-                    elif 750 <= atu <= 849:
-                        religioustales[language].append(story[4])
-                        religiouslen += len(story[4].split())
-
-                    elif 850 <= atu <= 999:
-                        realistictales[language].append(story[4])
-                        realisticlen += len(story[4].split())
-
-                    elif 1000 <= atu <= 1199:
-                        stupidogre[language].append(story[4])
-                        stupidogrelen += len(story[4].split())
-
-                    elif 1200 <= atu <= 1999:
-                        jokes[language].append(story[4])
-                        jokeslen += len(story[4].split())
-
-                    elif 2000 <= atu <= 2399:
-                        formulatales[language].append(story[4])
-                        formulalen += len(story[4].split())
-
-                    
-                else:
-                    corpora_no_atu[language].append(story)
-                    unknowncounter += 1
-                    unknowntexts[language].append(story[4])
-                    
-            #sprich ein Wert ist immer eine Liste von results
-            #in dieser Liste stecken Märchen in der Form von (Titel,Datenbanknummer,ATU Nummer,Sprache,Text)
-            #print('Matching Errors: '+str(num_matching_errors))
-            if not os.path.isdir('clean'):
-                os.mkdir('clean') # Erstellt Verzeichnis 'clean', falls noch nicht vorhanden.
-            
-            with open("clean/" + language + "_" + 'corpora.txt', 'w+', encoding='utf-8') as outfile:
-                outfile.write(str(corpora[language]))
-
-            with open("clean/" + language + "_" + 'corpora_no_atu.txt', 'w+', encoding='utf-8') as outfile:
-                outfile.write(str(corpora_no_atu[language]))
-                
-
-            with open("clean/" + language + "_" + 'unknowntexts_clean.txt',"w+",encoding = 'utf-8') as f:
-                for t in unknowntexts[language]:
-                    f.write(t)
-                    f.write('\n')
-
-            with open("clean/" + language + "_" + 'animaltales_clean.txt',"w+",encoding = 'utf-8') as f:
-                for t in animaltales[language]:
-                    f.write(t)
-                    f.write('\n')
-
-            with open("clean/" + language + "_" + 'magictales_clean.txt',"w+",encoding = 'utf-8') as f:
-                for t in magictales[language]:
-                    f.write(t)
-                    f.write('\n')
-
-            with open("clean/" + language + "_" + 'religioustales_clean.txt',"w+",encoding = 'utf-8') as f:
-                for t in religioustales[language]:
-                    f.write(t)
-                    f.write('\n')
-
-            with open("clean/" + language + "_" + 'realistictales_clean.txt',"w+",encoding = 'utf-8') as f:
-                for t in realistictales[language]:
-                    f.write(t)
-                    f.write('\n')
-
-            with open("clean/" + language + "_" + 'stupidogre_clean.txt',"w+",encoding = 'utf-8') as f:
-                for t in stupidogre[language]:
-                    f.write(t)
-                    f.write('\n')
-
-            with open("clean/" + language + "_" + 'jokes_clean.txt',"w+",encoding = 'utf-8') as f:
-                for t in jokes[language]:
-                    f.write(t)
-                    f.write('\n')
-
-            with open("clean/" + language + "_" + 'formulatales_clean.txt',"w+",encoding = 'utf-8') as f:
-                for t in formulatales[language]:
-                    f.write(t)
-                    f.write('\n')
-
-            print("Number of Folktales with ATU: " + str(counter))
-            print("Number of Animal Folktales: " + str(len(animaltales[language])))
-            print("Average length of an animal tale: " + str(animallen/len(animaltales[language])))
-            
-            print("Number of Magic Folktales: " + str(len(magictales[language])))
-            print("Average length of a magic tale: " + str(magiclen/len(magictales[language])))
-            
-            print("Number of Religious Folktales: " + str(len(religioustales[language])))
-            print("Average length of a religious tale: " + str(religiouslen/len(religioustales[language])))
-            
-            print("Number of Realistic Folktales: " + str(len(realistictales[language])))
-            print("Average length of a realistic tale: " + str(realisticlen/len(realistictales[language])))
-            
-            print("Number of Stupid Ogre Folktales: " + str(len(stupidogre[language])))
-            print("Average length of a stupid ogre tale: " + str(stupidogrelen/len(stupidogre[language])))
-            
-            print("Number of Jokes: " + str(len(jokes[language])))
-            print("Average length of a joke: " + str(jokeslen/len(jokes[language])))
-            
-            print("Number of Formula Folktales: " + str(len(formulatales[language])))
-            print("Average length of an formula tale: " + str(formulalen/len(formulatales[language])))
-            
-            print("Number of Folktales without ATU: " + str(unknowncounter))
-            print("Number of Folktales in total: " +str(i))
-    
-    def simple_export_mode():
-        corpora = {}
-        num_matching_errors = 0
-        
-        for link in [german_link]:  # [czech_link, danish_link, dutch_link, english_link, french_link, german_link, hungarian_link, italian_link, polish_link, russian_link, spanish_link]:
-            language = link.split('=')[-1] #am Ende des Links steht immer die Sprache
-            print('Processing Folktales in: '+language+'...')
-            corpora[language] = get_corpus(link, language) #Dictionary mit Sprachen als keys und Korpora als Werte
-            #sprich ein Wert ist immer eine Liste von results
-            #in dieser Liste stecken Märchen in der Form von (Titel,Datenbanknummer,ATU Nummer,Sprache,Text)
-    
-            #print('Matching Errors: '+str(num_matching_errors))
-
-        with open(filename, 'w+', encoding='utf-8') as outfile:
-            outfile.write(str(corpora))
-    
-    if mode == 'counter_and_categories':
-        counter_and_categories_mode()
-    elif mode == 'simple_export':
-        simple_export_mode()
-    else:
-        print('Failure: Invalid mode.')
-    
-if __name__ == '__main__':
-    if len(sys.argv) <= 1:
-        main(mode='counter_and_categories')
-    else:
-        main(mode='simple_export', filename=sys.argv[1])
+		with open('clean/' + language + '_corpora_no_atu.txt', 'w+', encoding='utf-8') as f:
+			f.write(str(corpora_no_atu[language]))
