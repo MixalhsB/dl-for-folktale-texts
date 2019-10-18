@@ -1,4 +1,7 @@
 from collections import defaultdict
+import os
+from nltk.tokenize import sent_tokenize
+from nltk.tokenize import word_tokenize
 
 class Story:
 
@@ -11,14 +14,14 @@ class Story:
 		self.text = text
 
 	def __str__(self):
-		# für backwardscompatibility
+		# for backwardscompatibility
 		return str((self.title, self.index, self.atu_type, self.language, self.text))
 
 
 def read_corpus(path):
 	with open(path, "r", encoding = 'utf-8') as f:
 		s = f.readline()
-		data = eval(s.replace("<class 'list'>", 'list')) # für defaultdict typen
+		data = eval(s.replace("<class 'list'>", 'list')) # for defaultdict typen
 		return data
 
 def write(path, content):
@@ -29,6 +32,22 @@ def write(path, content):
 			f.write('\n')
 			f.write(story.text)
 			f.write('\n\n')
+
+def average_sentence_length(content):
+	number_of_sentences = 0
+	number_of_words = 0
+	for story in content:
+		list_of_sentences = sent_tokenize(story.text)
+		number_of_sentences += len(list_of_sentences)
+
+		number_of_words += len(word_tokenize(story.text))
+	try:
+		res = round(number_of_words / number_of_sentences)
+	except ZeroDivisionError:
+		res = 0
+	return res
+
+
 
 
 
@@ -60,6 +79,15 @@ if __name__ == "__main__":
 	stupidogrelen = 0
 	jokeslen = 0
 	formulalen = 0
+	# dictionary that saves average sentence lengths per tale type and language
+	sentence_length_average = {}
+	sentence_length_average["animaltales"] = {}
+	sentence_length_average["animaltales"] = {}
+	sentence_length_average["magictales"] = {}
+	sentence_length_average["religioustales"]= {}
+	sentence_length_average["stupidogre"] = {}
+	sentence_length_average["jokes"] = {}
+	sentence_length_average["formulatales"] = {}
 
 
 	# corpora = read_corpus('corpora.txt')
@@ -118,6 +146,10 @@ if __name__ == "__main__":
 					formulatales[language].append(story)
 					formulalen += len(story.text.split())
 
+		dirName = 'clean'
+		if not os.path.exists(dirName):
+			os.mkdir(dirName)
+
 
 		write(language + '_animaltales' , animaltales[language])
 		write(language + '_magictales' , magictales[language])
@@ -126,10 +158,59 @@ if __name__ == "__main__":
 		write(language + '_jokes' , jokes[language])
 		write(language + '_formulatales' , formulatales[language])
 		write(language + '_unknowntexts' , unknowntexts[language])
-		
 
-		with open('clean/' + language + '_corpora.txt', 'w+', encoding='utf-8') as f:
+
+		# print("Average sentence length: ", language + '_animaltales', average_sentence_length(animaltales[language]))
+
+		sentence_length_average["animaltales"][language] = average_sentence_length(animaltales[language])
+		sentence_length_average["magictales"][language] = average_sentence_length(magictales[language])
+		sentence_length_average["religioustales"][language] = average_sentence_length(religioustales[language])
+		sentence_length_average["stupidogre"][language] = average_sentence_length(stupidogre[language])
+		sentence_length_average["jokes"][language] = average_sentence_length(jokes[language])
+		sentence_length_average["formulatales"][language] = average_sentence_length(formulatales[language])
+		print("average sentence length: ", sentence_length_average)
+
+		with open(dirName + "/" + language + '_corpora.txt', 'w+', encoding='utf-8') as f:
 			f.write(str(corpora[language]))
 
-		with open('clean/' + language + '_corpora_no_atu.txt', 'w+', encoding='utf-8') as f:
+		with open(dirName + "/" + language + '_corpora_no_atu.txt', 'w+', encoding='utf-8') as f:
 			f.write(str(corpora_no_atu[language]))
+
+		# print("Number of Folktales with ATU: " + str(counter))
+		# print("Number of Animal Folktales: " + str(len(animaltales[language])))
+
+		# average length of tales is saved into dictionary
+		length = defaultdict(int)
+		try:
+			# print("Average length of an animal tale: " + str(animallen / len(animaltales[language])))
+			length[language + "_animaltale"] = round(animallen / len(animaltales[language]))
+
+			# print("Number of Magic Folktales: " + str(len(magictales[language])))
+			# print("Average length of a magic tale: " + str(magiclen / len(magictales[language])))
+			length[language + "_magictale"] = round(magiclen / len(magictales[language]))
+
+			# print("Number of Religious Folktales: " + str(len(religioustales[language])))
+			# print("Average length of a religious tale: " + str(religiouslen / len(religioustales[language])))
+			length[language + "_religioustale"] = round(religiouslen / len(religioustales[language]))
+
+			# print("Number of Realistic Folktales: " + str(len(realistictales[language])))
+			# print("Average length of a realistic tale: " + str(realisticlen / len(realistictales[language])))
+			length[language + "_realistictale"] = round(realisticlen / len(realistictales[language]))
+
+			# print("Number of Stupid Ogre Folktales: " + str(len(stupidogre[language])))
+			# print("Average length of a stupid ogre tale: " + str(stupidogrelen / len(stupidogre[language])))
+			length[language + "_stupidogre"] = round(stupidogrelen / len(stupidogre[language]))
+
+			# print("Number of Jokes: " + str(len(jokes[language])))
+			# print("Average length of a joke: " + str(jokeslen / len(jokes[language])))
+			length[language + "_jokes"] = round(jokeslen / len(jokes[language]))
+
+			# print("Number of Formula Folktales: " + str(len(formulatales[language])))
+			# print("Average length of an formula tale: " + str(formulalen / len(formulatales[language])))
+			length[language + "_formulatale"] = round(formulalen / len(formulatales[language]))
+		except ZeroDivisionError:
+			pass
+		print(length)
+
+		# print("Number of Folktales without ATU: " + str(unknowncounter))
+		# print("Number of Folktales in total: " + str(i))
