@@ -2,7 +2,6 @@
 
 from keras.preprocessing.text import text_to_word_sequence, Tokenizer
 from bs4 import BeautifulSoup
-from corpus import Corpus
 import numpy as np
 import random
 
@@ -27,4 +26,5 @@ class Classifier:
         x_test[0] = i2list_representation
         tokenizer = Tokenizer(num_words=10000)
         bin_x_test = tokenizer.sequences_to_matrix(x_test, mode='binary')
+
         return self.corpus.class_names[model.predict_classes(bin_x_test)[0]]
