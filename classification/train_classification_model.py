@@ -1,39 +1,43 @@
 from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
-from keras.utils.vis_utils import plot_model
+# from keras.utils.vis_utils import plot_model
+from keras.utils import to_categorical
 from keras.models import Sequential
-from keras.layers import Dense
+from keras.layers import Dense, Activation, Dropout
 from keras.layers import Flatten
 from keras.layers import Embedding
 from keras.layers.convolutional import Conv1D
 from keras.layers.convolutional import MaxPooling1D
 
 from prepare_data_for_classification import *
+from corpus import *
+import numpy as np
+
+MY_CORPUS = Corpus('..\\corpora.txt', 'English', seed=None, exclude_stop_words=True)
 
 
-#Nach Kapitel 15 in Deep Learning for NLP
+# Nach Kapitel 15 in Deep Learning for NLP
 
 def load_doc(file):
     with open(file) as f:
         document = f.read()
     return document
 
+
 # load an already cleaned dataset
-def load_clean_dataset(language):
+def load_clean_dataset(vocab, is_train):
+    global MY_CORPUS
     # language ist zB so angegeben "English"
-    
+
     # load documents
     # UNKNOWN wird hier gerade auch als Label angesehen
-    animal = load_doc(language + "_animaltales_cleaned.txt")
-    magic = load_doc(language + "_magictales_cleaned.txt")
-    religious = load_doc(language + "_religioustales_cleaned.txt")
-    realistic = load_doc(language + "_realistictales_cleaned.txt")
-    ogre = load_doc(language + "_stupidogre_cleaned.txt")
-    jokes = load_doc(language + "_jokes_cleaned.txt")
-    formula = load_doc(language + "_formulatales_cleaned.txt")
-    UNKNOWN = load_doc(language + "_unknowntexts_cleaned.txt")
-    
-    docs = animal + magic + religious + realistic + ogre + jokes + formula + unknown
+
+    docs = []
+    for class_name in MY_CORPUS.gold_classes:
+        for story in MY_CORPUS.gold_classes[class_name]:
+            if (story in MY_CORPUS.train_stories and is_train) or (story in MY_CORPUS.test_stories and not is_train):
+                docs.append(' '.join([word for word in MY_CORPUS.extract_word_sequence(story) if word in vocab]))
+
     # prepare labels
     ## Labels:
     # animal    --> 0
@@ -46,9 +50,22 @@ def load_clean_dataset(language):
     # UNKNOWN   --> 7
 
     # im Buch gibt es nur zwei Labels
-    labels = array([0 for _ in range(len(animal))] + [1 for _ in range(len(magic))]+ [2 for _ in range(len(religious))]
-                   + [3 for _ in range(len(realistic))] + [4 for _ in range(len(ogre))] +  [5 for _ in range(len(jokes))]
-                   + [6 for _ in range(len(formula))] + [7 for _ in range(len(UNKNOWN))])
+    def _amount_of_stories_in_class_of_train_or_test_subset(class_name, is_train):
+        result = 0
+        for story in MY_CORPUS.gold_classes[class_name]:
+            if (story in MY_CORPUS.train_stories and is_train) or (story in MY_CORPUS.test_stories and not is_train):
+                result += 1
+        return result
+
+    labels = np.array(
+        [0 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('animal', is_train))]
+        + [1 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('magic', is_train))]
+        + [2 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('religious', is_train))]
+        + [3 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('realistic', is_train))]
+        + [4 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('ogre', is_train))]
+        + [5 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('jokes', is_train))]
+        + [6 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('formula', is_train))]
+        + [7 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('UNKNOWN', is_train))])
     return docs, labels
 
 
@@ -58,6 +75,7 @@ def create_tokenizer(lines):
     tokenizer.fit_on_texts(lines)
     return tokenizer
 
+
 # integer encode and pad documents
 def encode_docs(tokenizer, max_length, docs):
     # integer encode
@@ -65,6 +83,7 @@ def encode_docs(tokenizer, max_length, docs):
     # pad sequences
     padded = pad_sequences(encoded, maxlen=max_length, padding='post')
     return padded
+
 
 # define the model
 def define_model(vocab_size, max_length):
@@ -74,44 +93,73 @@ def define_model(vocab_size, max_length):
     model.add(MaxPooling1D(pool_size=2))
     model.add(Flatten())
     model.add(Dense(10, activation='relu'))
-    
+
     # Output Layer erhält 8 Nodes, für die 8 Label
     model.add(Dense(8, activation='sigmoid'))
-    
+
     # compile network
-    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
-    # summarize defined model
-    model.summary()
-    plot_model(model, to_file='model.png', show_shapes=True)
+    # model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+    model.compile(loss='categorical_crossentropy',
+                  optimizer='adam',
+                  metrics=['categorical_accuracy'])
+
+    # plot_model(model, to_file='model.png', show_shapes=True)
+
     return model
 
-# load the vocabulary
-vocab_filename = "German" + '_vocab.txt'
-vocab = load_doc(vocab_filename)
-vocab = set(vocab.split())
 
-# load training data
-train_docs, ytrain = load_clean_dataset("German")
+def main():
+    # load training data
+    vocab = set()
+    occurrence_count = {}
+    for story in MY_CORPUS:
+        for word in MY_CORPUS.extract_word_sequence(story):
+            vocab.add(word)
+            if word in occurrence_count:
+                occurrence_count[word] += 1
+            else:
+                occurrence_count[word] = 1
+    vocab = set(sorted(vocab, reverse=True, key=lambda x: occurrence_count[x])[0:500])
+    # print(vocab)
 
-# create the tokenizer
-tokenizer = create_tokenizer(train_docs)
+    # load all documents
+    train_docs, ytrain = load_clean_dataset(vocab, True)
+    test_docs, ytest = load_clean_dataset(vocab, False)
 
-# define vocabulary size
-vocab_size = len(tokenizer.word_index) + 1
-print('Vocabulary size: %d' % vocab_size)
+    ytrain = to_categorical(ytrain)
+    ytest = to_categorical(ytest)
 
-# calculate the maximum sequence length
-max_length = max([len(s.split()) for s in train_docs])
-print('Maximum length: %d' % max_length)
+    # create the tokenizer
+    tokenizer = create_tokenizer(train_docs)
 
-# encode data
-Xtrain = encode_docs(tokenizer, max_length, train_docs)
+    # define vocabulary size
+    vocab_size = len(tokenizer.word_index) + 1
+    print('Vocabulary size: %d' % vocab_size)
 
-# define model
-model = define_model(vocab_size, max_length)
+    # calculate the maximum sequence length
+    max_length = max([len(s.split()) for s in train_docs])
+    print('Maximum length: %d' % max_length)
 
-# fit network
-model.fit(Xtrain, ytrain, epochs=10, verbose=2)
+    # encode data
+    Xtrain = encode_docs(tokenizer, max_length, train_docs)
+    Xtest = encode_docs(tokenizer, max_length, test_docs)
 
-# save the model
-model.save('model.h5')
+    # define model
+    model = define_model(vocab_size, max_length)
+
+    # fit network
+    model.fit(Xtrain, ytrain, epochs=5, verbose=2, validation_split=0.1)
+
+    # save the model
+    # model.save('model.h5')
+
+    # evaluate model on training dataset
+    _, acc = model.evaluate(Xtrain, ytrain, verbose=0)
+    print('Train Accuracy: %.2f' % (acc * 100))
+
+    # evaluate model on test dataset
+    _, acc = model.evaluate(Xtest, ytest, verbose=0)
+    print('Test Accuracy: %.2f' % (acc * 100))
+
+    return model

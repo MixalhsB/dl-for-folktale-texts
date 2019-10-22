@@ -1,10 +1,14 @@
 # OLD NAME: corpus
 
 import ast
+import string
+import unicodedata
+
 import numpy as np
 import random
 import keras
 from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
 from bs4 import BeautifulSoup
 from keras.preprocessing.text import text_to_word_sequence, Tokenizer
 from keras.models import Sequential
@@ -13,15 +17,19 @@ from keras.layers import Dense, Dropout, Activation
 
 class Corpus:
 
-    def __init__(self, filename, language, test_split=0.2, seed=123):
-        self.stop_words = []  # self.stop_words = stopwords.words(language)
+    def __init__(self, filename, language, test_split=0.2, seed=123, exclude_stop_words=False):
+        if exclude_stop_words:
+            self.stop_words = stopwords.words(language)
+        else:
+            self.stop_words = []
 
         with open(filename, 'r', encoding='utf-8') as f:
             dict_syntaxed_string = f.read()
 
         self.stories = ast.literal_eval(dict_syntaxed_string)[language]
-        random.seed(seed)
-        random.shuffle(self.stories)
+        if seed is not None:
+            random.seed(seed)
+            random.shuffle(self.stories)
 
         self.class_names = ('animal', 'magic', 'religious', 'realistic', 'ogre', 'jokes', 'formula', 'UNKNOWN')
 
@@ -77,10 +85,28 @@ class Corpus:
     def __iter__(self):
         return iter(self.stories)
 
+    def tokenize(self, text):
+        tokens = []
+        text += '\n'
+
+        def _is_delimiter(c):
+            return not c.isalpha() and not c.isdigit()
+
+        current = ''
+        for size, char in enumerate(text):
+            if _is_delimiter(char):
+                if len(current) > 0:
+                    if current.lower() not in self.stop_words:
+                        tokens.append(current.lower())
+                current = ''
+            else:
+                current += char
+        return tokens
+
     def extract_word_sequence(self, story):
         html_text = story[4]
         raw_text = BeautifulSoup(html_text, "html.parser").text
-        return [word for word in text_to_word_sequence(raw_text) if word not in self.stop_words]
+        return self.tokenize(raw_text)
 
     def get_word_occurrences(self):
         result = []

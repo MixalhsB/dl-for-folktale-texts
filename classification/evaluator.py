@@ -16,5 +16,6 @@ class Evaluator:
             true_class_name = self.corpus.get_gold_class_name(story)
             predicted.append(predicted_class_name)
             true.append(true_class_name)
-        print(metrics.classification_report(true, predicted, digits=3))
-        print(metrics.confusion_matrix(true, predicted))
+        result = str(metrics.classification_report(true, predicted, digits=3))
+        result += str(metrics.confusion_matrix(true, predicted))
+        return result
