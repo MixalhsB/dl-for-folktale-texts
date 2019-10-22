@@ -1,24 +1,21 @@
 # OLD NAME: evaluator
 
-from collections import defaultdict
-from corpus import Corpus
-from classifier import Classifier
+from sklearn import metrics
+
 
 class Evaluator:
-    def __init__(self, corpus, classifier):
+    def __init__(self, corpus, classify):
         self.corpus = corpus
-        self.classifier = classifier
+        self.classify = classify
 
     def evaluate(self):
-        numberOfStories = 0
-        correctlyClassified = 0
-        assignedClasses = defaultdict(list)  # Dictionary mit Klassen als key und Liste von Geschichten als Value
-        for story in self.corpus:  # benutzt __iter__ in Klasse Corpus
-            numberOfStories += 1
-            category = self.classifier.simple_reuters_classify(story[4])  # waehle Kategorie
-            assignedClasses[category].append(story)
-        for (className, stories) in assignedClasses.items():
-            for story in stories:
-                if story in self.corpus.gold_classes[className]:
-                    correctlyClassified += 1
-        return correctlyClassified / numberOfStories
+        predicted = []
+        true = []
+        for story in self.corpus.test_stories:
+            predicted_class_name = self.classify(story[4])
+            true_class_name = self.corpus.get_gold_class_name(story)
+            predicted.append(predicted_class_name)
+            true.append(true_class_name)
+        result = str(metrics.classification_report(true, predicted, digits=3))
+        result += str(metrics.confusion_matrix(true, predicted))
+        return result

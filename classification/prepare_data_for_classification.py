@@ -117,10 +117,5 @@ def clean_language(lng):
 
     print("Done with " + lng + " .")
 
-clean_language('German') 
-        
-            
-            
-            
-
-
+def main():
+    clean_language('German') 
