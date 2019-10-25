@@ -27,6 +27,7 @@ class Corpus:
             dict_syntaxed_string = f.read()
 
         self.stories = ast.literal_eval(dict_syntaxed_string)[language]
+
         if seed is not None:
             random.seed(seed)
             random.shuffle(self.stories)
@@ -35,11 +36,19 @@ class Corpus:
 
         self.test_split = test_split
 
+
         def _get_number(atu_string):
             try:
-                return int(''.join(char for char in atu_string if char.isdigit()))
+                atu_int = int(''.join(char for char in atu_string if char.isdigit()))
+                if atu_int < 1 or atu_int > 2399:
+                    return -1
+                else:
+                    return atu_int
             except ValueError:
                 return -1
+
+        # print(_get_number('UNKNOWN'))
+        # assert False
 
         def _get_atu_range(class_name):
             if class_name == 'animal':
@@ -56,8 +65,8 @@ class Corpus:
                 return 1200, 1999
             elif class_name == 'formula':
                 return 2000, 2399
-            else:
-                assert False
+            elif class_name == 'UNKNOWN':
+                return -1, -1
 
         def _is_atu_in_range(atu_string, class_name):
             try:
