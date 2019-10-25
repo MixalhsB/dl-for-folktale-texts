@@ -13,7 +13,7 @@ from prepare_data_for_classification import *
 from corpus import *
 import numpy as np
 
-MY_CORPUS = Corpus('..\\corpora.txt', 'English', seed=None, exclude_stop_words=True)
+MY_CORPUS = Corpus('..\\corpora.txt', 'English', seed=123, exclude_stop_words=True)
 
 
 # Nach Kapitel 15 in Deep Learning for NLP
