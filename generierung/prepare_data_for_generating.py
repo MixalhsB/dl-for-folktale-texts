@@ -1,8 +1,6 @@
 import string
 import re
-
-
-# funktioniert noch nicht!!!
+import os
 
 # load doc into memory
 def load_doc(filename):
@@ -40,12 +38,10 @@ def save_doc(lines, filename):
     text = lines[1]
     length = len(title)
     data = ""
-    for i in length:
+    for i in range(0,length):
         data += title[i] + "\n" + text[i] + "\n\n"
-    # data = '\n'.join(lines)
-    file = open(filename, 'w',encoding = 'utf-8')
-    file.write(data)
-    file.close()
+    with open(filename, 'w+', encoding = 'utf-8') as f:
+        f.write(data)
 
     
 # load
@@ -59,15 +55,18 @@ def load_tales(in_filename):
     # einzelne Märchen sind durch \n\n getrennt
     fairytales = doc.split("\n\n")
     tales = dict()
-    for story in fairytales:
-        story = story.split("\n")
+    for text in fairytales:
+        story = text.split("\n")
         # Titel als key, Text als value
-        tales[story[0]] = story[1]
+        try:
+            tales[story[0]] = story[1]
+        except IndexError:
+            continue
 
     # clean document
     title_tokens = []
     text_tokens = []
-    for title, text in tales:
+    for title, text in tales.items():
         title_tokens += clean_doc(title)
         text_tokens += clean_doc(text)
     print(title_tokens[:200])
@@ -77,58 +76,59 @@ def load_tales(in_filename):
     print('Unique Title Tokens: %d' % len(set(title_tokens))) #Vocabulary size
     print('Unique Text Tokens: %d' % len(set(text_tokens)))
 
-#### CONTINUE HERE #####
-
 
     # organize into sequences of tokens
     # as input to our model
-    length = 50 + 1
+    title_length = 10
+    text_length = 50 + 1
     title_sequences = list()
     text_sequences = list()
-    for i in range(length, len(title_tokens)):
+    for i in range(title_length, len(title_tokens)):
         # select sequence of tokens
-        title_seq = title_tokens[i-length:i]
+        title_seq = title_tokens[i-title_length:i]
         # convert into a line
         title_line = ' '.join(title_seq)
         # store
         title_sequences.append(title_line)
-    for j in range(length, len(text_tokens)):
-        text_seq = text_tokens[j-length:j]
+    for j in range(text_length, len(text_tokens)):
+        text_seq = text_tokens[j-text_length:j]
         text_line = " ".join(text_seq)
         text_sequences.append(text_line)
     print('Total Title Sequences: %d' % len(title_sequences))
-    print("Total Text Sequences: %d" % len(title_sequences))
+    print("Total Text Sequences: %d" % len(text_sequences))
 
     return (title_sequences, text_sequences)
 
 if __name__ == "__main__":
     #load tales and return sequences for generating:
-    language = 'english'
-    animalseq = load_tales("clean/" + language + '_'+ 'animaltales_clean.txt')
-    magicseq = load_tales("clean/" + language + '_'+'magictales_clean.txt')
-    religiousseq = load_tales("clean/" + language + '_'+'religioustales_clean.txt')
-    realisticseq = load_tales("clean/" + language + '_'+'realistictales_clean.txt')
-    stupidogreseq = load_tales("clean/" + language + '_'+'stupidogre_clean.txt')
-    jokesseq = load_tales("clean/" + language + '_'+'jokes_clean.txt')
-    formulaseq = load_tales("clean/" + language + '_'+'formulatales_clean.txt')
+    languages = ["Czech", "Danish", "Dutch", "English", "French", "German", "Hungarian", "Italian", "Polish", "Russian", "Spanish"]
+    os.chdir("..") # um in den vorderen Ordner zu gelangen (da dort der "clean" Ordner liegt)
+    for language in languages:
+        animalseq = load_tales("clean/" + language + '_'+ 'animaltales_clean.txt')
+        magicseq = load_tales("clean/" + language + '_'+'magictales_clean.txt')
+        religiousseq = load_tales("clean/" + language + '_'+'religioustales_clean.txt')
+        realisticseq = load_tales("clean/" + language + '_'+'realistictales_clean.txt')
+        stupidogreseq = load_tales("clean/" + language + '_'+'stupidogre_clean.txt')
+        jokesseq = load_tales("clean/" + language + '_'+'jokes_clean.txt')
+        formulaseq = load_tales("clean/" + language + '_'+'formulatales_clean.txt')
 
-    # save sequences to files
-    out_filename1 = "sequence/" + language + '_'+'animaltales_sequences.txt'
-    save_doc(animalseq, out_filename1)
-    out_filename2 = "sequence/" + language + '_'+'magictales_sequences.txt'
-    save_doc(magicseq, out_filename2)
-    out_filename3 = "sequence/" + language + '_'+'religioustales_sequences.txt'
-    save_doc(religiousseq, out_filename3)
-    out_filename4 = "sequence/" + language + '_'+'realistictales_sequences.txt'
-    save_doc(realisticseq, out_filename4)
-    out_filename5 = "sequence/" + language + '_'+'stupidogre_sequences.txt'
-    save_doc(stupidogreseq, out_filename5)
-    out_filename6 = "sequence/" + language + '_'+'jokes_sequences.txt'
-    save_doc(jokesseq, out_filename6)
-    out_filename7 = "sequence/" + language + '_'+'formulatales_sequences.txt'
-    save_doc(formulaseq, out_filename7)
+        # save sequences to files
+        out_filename1 = "generierung/sequence/" + language + '_animaltales_sequences.txt'
+        save_doc(animalseq, out_filename1)
+        out_filename2 = "generierung/sequence/" + language + '_magictales_sequences.txt'
+        save_doc(magicseq, out_filename2)
+        out_filename3 = "generierung/sequence/" + language + '_religioustales_sequences.txt'
+        save_doc(religiousseq, out_filename3)
+        out_filename4 = "generierung/sequence/" + language + '_realistictales_sequences.txt'
+        save_doc(realisticseq, out_filename4)
+        out_filename5 = "generierung/sequence/" + language + '_stupidogre_sequences.txt'
+        save_doc(stupidogreseq, out_filename5)
+        out_filename6 = "generierung/sequence/" + language + '_jokes_sequences.txt'
+        save_doc(jokesseq, out_filename6)
+        out_filename7 = "generierung/sequence/" + language + '_formulatales_sequences.txt'
+        save_doc(formulaseq, out_filename7)
 
-    print("Files created: " + '\n' + out_filename1 + '\n' + out_filename2)
-    print(out_filename3 + '\n' + out_filename4 + '\n' +out_filename5)
-    print(out_filename6 + '\n' +out_filename7 + '\n')
+        print("Files created: " + '\n' + out_filename1 + '\n' + out_filename2)
+        print(out_filename3 + '\n' + out_filename4 + '\n' +out_filename5)
+        print(out_filename6 + '\n' +out_filename7 + '\n')
         

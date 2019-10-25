@@ -154,6 +154,7 @@ if __name__ == "__main__":
 		write(language + '_animaltales' , animaltales[language])
 		write(language + '_magictales' , magictales[language])
 		write(language + '_religioustales' , religioustales[language])
+		write(language + "_realistictales", realistictales[language])
 		write(language + '_stupidogre' , stupidogre[language])
 		write(language + '_jokes' , jokes[language])
 		write(language + '_formulatales' , formulatales[language])
