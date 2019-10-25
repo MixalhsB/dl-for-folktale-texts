@@ -79,22 +79,23 @@ def load_tales(in_filename):
 
     # organize into sequences of tokens
     # as input to our model
-    length = 50 + 1
+    title_length = 10
+    text_length = 50 + 1
     title_sequences = list()
     text_sequences = list()
-    for i in range(length, len(title_tokens)):
+    for i in range(title_length, len(title_tokens)):
         # select sequence of tokens
-        title_seq = title_tokens[i-length:i]
+        title_seq = title_tokens[i-title_length:i]
         # convert into a line
         title_line = ' '.join(title_seq)
         # store
         title_sequences.append(title_line)
-    for j in range(length, len(text_tokens)):
-        text_seq = text_tokens[j-length:j]
+    for j in range(text_length, len(text_tokens)):
+        text_seq = text_tokens[j-text_length:j]
         text_line = " ".join(text_seq)
         text_sequences.append(text_line)
     print('Total Title Sequences: %d' % len(title_sequences))
-    print("Total Text Sequences: %d" % len(title_sequences))
+    print("Total Text Sequences: %d" % len(text_sequences))
 
     return (title_sequences, text_sequences)
 
