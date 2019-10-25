@@ -2,9 +2,6 @@ import string
 import re
 import os
 
-
-# funktioniert noch nicht!!!
-
 # load doc into memory
 def load_doc(filename):
     # open the file as read only
