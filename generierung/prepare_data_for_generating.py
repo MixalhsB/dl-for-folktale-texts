@@ -45,7 +45,7 @@ def save_doc(lines, filename):
 
     
 # load
-def load_tales(in_filename):
+def load_tales(in_filename, average_sentence_length, average_title_length):
 
 
     print("Loading,cleaning and organizing sequences of " + str(in_filename))
@@ -79,8 +79,8 @@ def load_tales(in_filename):
 
     # organize into sequences of tokens
     # as input to our model
-    title_length = 10
-    text_length = 50 + 1
+    title_length = average_title_length
+    text_length = average_sentence_length
     title_sequences = list()
     text_sequences = list()
     for i in range(title_length, len(title_tokens)):
@@ -100,17 +100,25 @@ def load_tales(in_filename):
     return (title_sequences, text_sequences)
 
 if __name__ == "__main__":
+    # read in average length
+    with open("../average_sentence_length.txt", "r", encoding="utf-8") as f:
+        sentence_length = f.readline()
+        sentence_length = eval(sentence_length)
+    with open("../average_title_length.txt", "r", encoding="utf-8") as h:
+        title_length = h.readline()
+        title_length = eval(title_length)
+
     #load tales and return sequences for generating:
     languages = ["Czech", "Danish", "Dutch", "English", "French", "German", "Hungarian", "Italian", "Polish", "Russian", "Spanish"]
     os.chdir("..") # um in den vorderen Ordner zu gelangen (da dort der "clean" Ordner liegt)
     for language in languages:
-        animalseq = load_tales("clean/" + language + '_'+ 'animaltales_clean.txt')
-        magicseq = load_tales("clean/" + language + '_'+'magictales_clean.txt')
-        religiousseq = load_tales("clean/" + language + '_'+'religioustales_clean.txt')
-        realisticseq = load_tales("clean/" + language + '_'+'realistictales_clean.txt')
-        stupidogreseq = load_tales("clean/" + language + '_'+'stupidogre_clean.txt')
-        jokesseq = load_tales("clean/" + language + '_'+'jokes_clean.txt')
-        formulaseq = load_tales("clean/" + language + '_'+'formulatales_clean.txt')
+        animalseq = load_tales("clean/" + language + '_'+ 'animaltales_clean.txt', sentence_length["animaltales"][language], title_length["animaltales"][language])
+        magicseq = load_tales("clean/" + language + '_'+'magictales_clean.txt', sentence_length["magictales"][language], title_length["magictales"][language])
+        religiousseq = load_tales("clean/" + language + '_'+'religioustales_clean.txt', sentence_length["religioustales"][language], title_length["religioustales"][language])
+        realisticseq = load_tales("clean/" + language + '_'+'realistictales_clean.txt', sentence_length["realistictales"][language], title_length["realistictales"][language])
+        stupidogreseq = load_tales("clean/" + language + '_'+'stupidogre_clean.txt', sentence_length["stupidogre"][language], title_length["stupidogre"][language])
+        jokesseq = load_tales("clean/" + language + '_'+'jokes_clean.txt', sentence_length["jokes"][language], title_length["jokes"][language])
+        formulaseq = load_tales("clean/" + language + '_'+'formulatales_clean.txt', sentence_length["formulatales"][language], title_length["formulatales"][language])
 
         # save sequences to files
         out_filename1 = "generierung/sequence/" + language + '_animaltales_sequences.txt'

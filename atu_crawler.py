@@ -97,11 +97,20 @@ if __name__ == "__main__":
 	sentence_length_average["animaltales"] = {}
 	sentence_length_average["magictales"] = {}
 	sentence_length_average["religioustales"]= {}
+	sentence_length_average["realistictales"] = {}
 	sentence_length_average["stupidogre"] = {}
 	sentence_length_average["jokes"] = {}
 	sentence_length_average["formulatales"] = {}
 	length = defaultdict(int)
 	title_length_average = {}
+	title_length_average["animaltales"] = {}
+	title_length_average["animaltales"] = {}
+	title_length_average["magictales"] = {}
+	title_length_average["religioustales"]= {}
+	title_length_average["realistictales"] = {}
+	title_length_average["stupidogre"] = {}
+	title_length_average["jokes"] = {}
+	title_length_average["formulatales"] = {}
 
 
 	# corpora = read_corpus('corpora.txt')
@@ -175,17 +184,19 @@ if __name__ == "__main__":
 
 		# print("Average sentence length: ", language + '_animaltales', average_sentence_length(animaltales[language]))
 		sentence_length_average["animaltales"][language] = average_sentence_length(animaltales[language])
-		title_length_average[language + "_animaltales"] = average_title_length(animaltales[language])
+		title_length_average["animaltales"][language] = average_title_length(animaltales[language])
 		sentence_length_average["magictales"][language] = average_sentence_length(magictales[language])
-		title_length_average[language + "_magictales"] = average_title_length(magictales[language])
+		title_length_average["magictales"][language] = average_title_length(magictales[language])
 		sentence_length_average["religioustales"][language] = average_sentence_length(religioustales[language])
-		title_length_average[language + "_religioustales"] = average_title_length(religioustales[language])
+		title_length_average["religioustales"][language] = average_title_length(religioustales[language])
+		sentence_length_average["realistictales"][language] = average_sentence_length(realistictales[language])
+		title_length_average["realistictales"][language] = average_title_length(realistictales[language])
 		sentence_length_average["stupidogre"][language] = average_sentence_length(stupidogre[language])
-		title_length_average[language + "_stupidogre"] = average_title_length(stupidogre[language])
+		title_length_average["stupidogre"][language] = average_title_length(stupidogre[language])
 		sentence_length_average["jokes"][language] = average_sentence_length(jokes[language])
-		title_length_average[language + "_jokes"] = average_title_length(jokes[language])
+		title_length_average["jokes"][language] = average_title_length(jokes[language])
 		sentence_length_average["formulatales"][language] = average_sentence_length(formulatales[language])
-		title_length_average[language + "_formulatales"] = average_title_length(formulatales[language])
+		title_length_average["formulatales"][language] = average_title_length(formulatales[language])
 		# print("average sentence length: ", sentence_length_average)
 
 		with open(dirName + "/" + language + '_corpora.txt', 'w+', encoding='utf-8') as f:
