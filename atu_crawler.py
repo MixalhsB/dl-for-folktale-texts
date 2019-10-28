@@ -88,6 +88,7 @@ if __name__ == "__main__":
 	sentence_length_average["stupidogre"] = {}
 	sentence_length_average["jokes"] = {}
 	sentence_length_average["formulatales"] = {}
+	length = defaultdict(int)
 
 
 	# corpora = read_corpus('corpora.txt')
@@ -169,7 +170,7 @@ if __name__ == "__main__":
 		sentence_length_average["stupidogre"][language] = average_sentence_length(stupidogre[language])
 		sentence_length_average["jokes"][language] = average_sentence_length(jokes[language])
 		sentence_length_average["formulatales"][language] = average_sentence_length(formulatales[language])
-		print("average sentence length: ", sentence_length_average)
+		# print("average sentence length: ", sentence_length_average)
 
 		with open(dirName + "/" + language + '_corpora.txt', 'w+', encoding='utf-8') as f:
 			f.write(str(corpora[language]))
@@ -181,7 +182,7 @@ if __name__ == "__main__":
 		# print("Number of Animal Folktales: " + str(len(animaltales[language])))
 
 		# average length of tales is saved into dictionary
-		length = defaultdict(int)
+	
 		try:
 			# print("Average length of an animal tale: " + str(animallen / len(animaltales[language])))
 			length[language + "_animaltale"] = round(animallen / len(animaltales[language]))
@@ -211,7 +212,11 @@ if __name__ == "__main__":
 			length[language + "_formulatale"] = round(formulalen / len(formulatales[language]))
 		except ZeroDivisionError:
 			pass
-		print(length)
+		# print(length)
+	with open("average_tale_length.txt", "w+", encoding="utf-8") as f:
+		f.write(str(length))
+	with open("average_sentence_length.txt", "w+", encoding="utf-8") as g:
+		g.write(str(sentence_length_average))
 
 		# print("Number of Folktales without ATU: " + str(unknowncounter))
 		# print("Number of Folktales in total: " + str(i))
