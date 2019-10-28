@@ -94,7 +94,7 @@ if __name__ == "__main__":
 	# dictionary that saves average sentence lengths per tale type and language
 	sentence_length_average = {}
 	sentence_length_average["animaltales"] = {}
-	sentence_length_average["animaltales"] = {}
+	sentence_length_average["realistictales"] = {}
 	sentence_length_average["magictales"] = {}
 	sentence_length_average["religioustales"]= {}
 	sentence_length_average["stupidogre"] = {}
