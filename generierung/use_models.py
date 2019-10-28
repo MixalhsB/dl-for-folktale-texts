@@ -105,5 +105,14 @@ print(seed_text + '\n')
 
 # generate new text
 # how long should it be? -> average length of a tale?
-generated = generate_seq(model, tokenizer, seq_length, seed_text, 50)
+
+#TODO statt durchschnittlicher satzlaenge, min und max speichern und dann eine random zahl dazwischen nehmen
+def random_tale_length(language, type):
+    with open("average_tale_length.txt", encoding = "utf8") as file:
+        for line in file:
+            if language + "_" + type in line:
+                print(line.split()[-1])
+    return int(line.split()[-1])
+#TODO kind ist z.B. animaltaleS, in der datei/ dictonary steht aber noch animaltale --> einheitliche Gestaltung!
+generated = generate_seq(model, tokenizer, seq_length, seed_text, random_tale_length(language, kind))
 print(generated)
