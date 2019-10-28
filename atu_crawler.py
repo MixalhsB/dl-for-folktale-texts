@@ -47,6 +47,18 @@ def average_sentence_length(content):
 		res = 0
 	return res
 
+def average_title_length(content):
+	number_of_titles = 0
+	number_of_words = 0
+	for story in content:
+		title = story.title
+		number_of_titles += 1
+		number_of_words += len(word_tokenize(title))
+	try:
+		res = round(number_of_words / number_of_titles)
+	except ZeroDivisionError:
+		res = 0
+	return res
 
 
 
@@ -89,6 +101,7 @@ if __name__ == "__main__":
 	sentence_length_average["jokes"] = {}
 	sentence_length_average["formulatales"] = {}
 	length = defaultdict(int)
+	title_length_average = {}
 
 
 	# corpora = read_corpus('corpora.txt')
@@ -151,7 +164,6 @@ if __name__ == "__main__":
 		if not os.path.exists(dirName):
 			os.mkdir(dirName)
 
-
 		write(language + '_animaltales' , animaltales[language])
 		write(language + '_magictales' , magictales[language])
 		write(language + '_religioustales' , religioustales[language])
@@ -161,15 +173,19 @@ if __name__ == "__main__":
 		write(language + '_formulatales' , formulatales[language])
 		write(language + '_unknowntexts' , unknowntexts[language])
 
-
 		# print("Average sentence length: ", language + '_animaltales', average_sentence_length(animaltales[language]))
-
 		sentence_length_average["animaltales"][language] = average_sentence_length(animaltales[language])
+		title_length_average[language + "_animaltales"] = average_title_length(animaltales[language])
 		sentence_length_average["magictales"][language] = average_sentence_length(magictales[language])
+		title_length_average[language + "_magictales"] = average_title_length(magictales[language])
 		sentence_length_average["religioustales"][language] = average_sentence_length(religioustales[language])
+		title_length_average[language + "_religioustales"] = average_title_length(religioustales[language])
 		sentence_length_average["stupidogre"][language] = average_sentence_length(stupidogre[language])
+		title_length_average[language + "_stupidogre"] = average_title_length(stupidogre[language])
 		sentence_length_average["jokes"][language] = average_sentence_length(jokes[language])
+		title_length_average[language + "_jokes"] = average_title_length(jokes[language])
 		sentence_length_average["formulatales"][language] = average_sentence_length(formulatales[language])
+		title_length_average[language + "_formulatales"] = average_title_length(formulatales[language])
 		# print("average sentence length: ", sentence_length_average)
 
 		with open(dirName + "/" + language + '_corpora.txt', 'w+', encoding='utf-8') as f:
@@ -217,6 +233,8 @@ if __name__ == "__main__":
 		f.write(str(length))
 	with open("average_sentence_length.txt", "w+", encoding="utf-8") as g:
 		g.write(str(sentence_length_average))
+	with open("average_title_length.txt", "w+", encoding="utf-8") as h:
+		h.write(str(title_length_average))
 
 		# print("Number of Folktales without ATU: " + str(unknowncounter))
 		# print("Number of Folktales in total: " + str(i))
