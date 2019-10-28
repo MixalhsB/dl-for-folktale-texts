@@ -86,10 +86,10 @@ def trainmodel(in_filename):
 
 language = 'german'
 
-trainmodel("sequence/" + language + '_' +'animaltales_sequences.txt')
+# trainmodel("sequence/" + language + '_' +'animaltales_sequences.txt')
 # trainmodel("sequence/" + language + '_'+'magictales_sequences.txt') # MemoryError
 ##
-##trainmodel("sequence/" + language + '_'+'religioustales_sequences.txt')
+trainmodel("sequence/" + language + '_'+'religioustales_sequences.txt')
 ##
 ##trainmodel("sequence/" + language + '_'+'realistictales_sequences.txt')
 ##trainmodel("sequence/" + language + '_'+'stupidogre_sequences.txt')

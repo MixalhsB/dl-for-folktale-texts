@@ -74,36 +74,41 @@ def load_tales(in_filename):
     return sequences
 
 #load tales and return sequences for generating:
-language = 'german'
-animalseq = load_tales("clean/" + language + '_'+ 'animaltales_clean.txt')
-magicseq = load_tales("clean/" + language + '_'+'magictales_clean.txt')
-religiousseq = load_tales("clean/" + language + '_'+'religioustales_clean.txt')
-realisticseq = load_tales("clean/" + language + '_'+'realistictales_clean.txt')
-stupidogreseq = load_tales("clean/" + language + '_'+'stupidogre_clean.txt')
-jokesseq = load_tales("clean/" + language + '_'+'jokes_clean.txt')
-formulaseq = load_tales("clean/" + language + '_'+'formulatales_clean.txt')
+language = 'German'
+# change slash depending on whether you use Windows or Linux!!!
+slash = "\\" # Windows
+# slash = "/" # Linux
+
+# animalseq = load_tales("clean" + slash + language + '_'+ 'animaltales_clean.txt')
+# magicseq = load_tales("clean/" + language + '_'+'magictales_clean.txt')
+religiousseq = load_tales("clean" + slash + language + '_'+'religioustales_clean.txt')
+# realisticseq = load_tales("clean/" + language + '_'+'realistictales_clean.txt')
+# stupidogreseq = load_tales("clean/" + language + '_'+'stupidogre_clean.txt')
+# jokesseq = load_tales("clean/" + language + '_'+'jokes_clean.txt')
+# formulaseq = load_tales("clean/" + language + '_'+'formulatales_clean.txt')
 
 if not os.path.isdir("sequence"):
     os.makedirs("sequence")
 
 # save sequences to files
-out_filename1 = "sequence/" + language + '_'+'animaltales_sequences.txt'
-save_doc(animalseq, out_filename1)
-out_filename2 = "sequence/" + language + '_'+'magictales_sequences.txt'
-save_doc(magicseq, out_filename2)
-out_filename3 = "sequence/" + language + '_'+'religioustales_sequences.txt'
+# out_filename1 = "sequence" + slash + language + '_'+'animaltales_sequences.txt'
+# save_doc(animalseq, out_filename1)
+# out_filename2 = "sequence/" + language + '_'+'magictales_sequences.txt'
+# save_doc(magicseq, out_filename2)
+out_filename3 = "sequence" + slash + language + '_'+'religioustales_sequences.txt'
 save_doc(religiousseq, out_filename3)
-out_filename4 = "sequence/" + language + '_'+'realistictales_sequences.txt'
-save_doc(realisticseq, out_filename4)
-out_filename5 = "sequence/" + language + '_'+'stupidogre_sequences.txt'
-save_doc(stupidogreseq, out_filename5)
-out_filename6 = "sequence/" + language + '_'+'jokes_sequences.txt'
-save_doc(jokesseq, out_filename6)
-out_filename7 = "sequence/" + language + '_'+'formulatales_sequences.txt'
-save_doc(formulaseq, out_filename7)
+# out_filename4 = "sequence/" + language + '_'+'realistictales_sequences.txt'
+# save_doc(realisticseq, out_filename4)
+# out_filename5 = "sequence/" + language + '_'+'stupidogre_sequences.txt'
+# save_doc(stupidogreseq, out_filename5)
+# out_filename6 = "sequence/" + language + '_'+'jokes_sequences.txt'
+# save_doc(jokesseq, out_filename6)
+# out_filename7 = "sequence/" + language + '_'+'formulatales_sequences.txt'
+# save_doc(formulaseq, out_filename7)
 
-print("Files created: " + '\n' + out_filename1 + '\n' + out_filename2)
-print(out_filename3 + '\n' + out_filename4 + '\n' +out_filename5)
-print(out_filename6 + '\n' +out_filename7 + '\n')
+print("Files created: " + '\n' + out_filename3 )
+# + '\n' + out_filename2)
+# print(out_filename3 + '\n' + out_filename4 + '\n' +out_filename5)
+# print(out_filename6 + '\n' +out_filename7 + '\n')
       
 
