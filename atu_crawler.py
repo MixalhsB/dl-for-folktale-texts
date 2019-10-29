@@ -94,7 +94,7 @@ if __name__ == "__main__":
 	# dictionary that saves average sentence lengths per tale type and language
 	sentence_length_average = {}
 	sentence_length_average["animaltales"] = {}
-	sentence_length_average["realistictales"] = {}
+	sentence_length_average["animaltales"] = {}
 	sentence_length_average["magictales"] = {}
 	sentence_length_average["religioustales"]= {}
 	sentence_length_average["stupidogre"] = {}
@@ -178,8 +178,6 @@ if __name__ == "__main__":
 		title_length_average[language + "_animaltales"] = average_title_length(animaltales[language])
 		sentence_length_average["magictales"][language] = average_sentence_length(magictales[language])
 		title_length_average[language + "_magictales"] = average_title_length(magictales[language])
-		sentence_length_average["realistictales"][language] = average_sentence_length(realistictales[language])
-		title_length_average[language + "_realistictales"] = average_title_length(realistictales[language])
 		sentence_length_average["religioustales"][language] = average_sentence_length(religioustales[language])
 		title_length_average[language + "_religioustales"] = average_title_length(religioustales[language])
 		sentence_length_average["stupidogre"][language] = average_sentence_length(stupidogre[language])
@@ -231,10 +229,8 @@ if __name__ == "__main__":
 		except ZeroDivisionError:
 			pass
 		# print(length)
-
 	with open("average_tale_length.txt", "w+", encoding="utf-8") as f:
-		for key, value in length.items():
-			f.write(str(key) + "\t" + str(value) + "\n")
+		f.write(str(length))
 	with open("average_sentence_length.txt", "w+", encoding="utf-8") as g:
 		g.write(str(sentence_length_average))
 	with open("average_title_length.txt", "w+", encoding="utf-8") as h:
