@@ -22,6 +22,7 @@ def clean_doc(doc):
     # prepare regex for char filtering
     re_punc = re.compile('[%s]' % re.escape(string.punctuation))
     # remove punctuation from each word
+    #TODO remove punctuation here
     tokens = [re_punc.sub('', w) for w in tokens]
     # remove remaining tokens that are not alphabetic
     tokens = [word for word in tokens if word.isalpha()]
