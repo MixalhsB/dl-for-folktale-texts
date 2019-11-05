@@ -1,3 +1,4 @@
+import random
 from random import randint
 from pickle import load
 from keras.models import load_model
@@ -107,12 +108,20 @@ print(seed_text + '\n')
 # how long should it be? -> average length of a tale?
 
 #TODO statt durchschnittlicher satzlaenge, min und max speichern und dann eine random zahl dazwischen nehmen
-def random_tale_length(language, type):
+def avg_tale_length(language, type, range_around_avg):
+    """
+    computes a random number out of the intervall average-tale-length-range_around_avg and +range_around_avg
+    :param language: string
+    :param type: string
+    :param range_around_avg: int
+    :return: random number between average talelength +/- range given
+    """
     with open("average_tale_length.txt", encoding = "utf8") as file:
         for line in file:
             if language + "_" + type in line:
                 print(line.split()[-1])
-    return int(line.split()[-1])
-#TODO kind ist z.B. animaltaleS, in der datei/ dictonary steht aber noch animaltale --> einheitliche Gestaltung!
-generated = generate_seq(model, tokenizer, seq_length, seed_text, random_tale_length(language, kind))
+    avg = int(line.split()[-1])
+    return random.randrange(avg-range_around_avg, avg+range_around_avg)
+
+generated = generate_seq(model, tokenizer, seq_length, seed_text, avg_tale_length(language, kind,100))
 print(generated)
