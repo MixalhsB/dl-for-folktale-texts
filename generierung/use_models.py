@@ -1,8 +1,12 @@
+#!/usr/bin/python
+#-*- coding:utf-8 -*-
+
 import random
 from random import randint
 from pickle import load
 from keras.models import load_model
 from keras.preprocessing.sequence import pad_sequences
+from collections import defaultdict
 
 
 # load doc into memory (training data sequences)
@@ -94,10 +98,12 @@ lines = doc.split('\n')
 seq_length = len(lines[0].split()) - 1
 
 # load the model
-model = load_model('generated_model.h5')
+model_name = "german_animaltales_model.h5"
+model = load_model("models/"+ model_name)
 
 # load the tokenizer
-tokenizer = load(open('tokenizer_generated_model.pkl', 'rb'))
+tokenizer_name = "german_animaltales_tokenizer.pkl"
+tokenizer = load(open("tokenizer/"+ tokenizer_name, 'rb'))
 
 # select a seed text: random line of text from the input text
 # maybe the first line?
@@ -107,7 +113,7 @@ print(seed_text + '\n')
 # generate new text
 # how long should it be? -> average length of a tale?
 
-#TODO statt durchschnittlicher satzlaenge, min und max speichern und dann eine random zahl dazwischen nehmen
+#TODO zusaetzlich zur durchschnittlicher satzlaenge, min und max speichern und dann eine random zahl dazwischen nehmen
 def avg_tale_length(language, type, range_around_avg):
     """
     computes a random number out of the intervall average-tale-length-range_around_avg and +range_around_avg
@@ -117,10 +123,10 @@ def avg_tale_length(language, type, range_around_avg):
     :return: random number between average talelength +/- range given
     """
     with open("average_tale_length.txt", encoding = "utf8") as file:
-        for line in file:
-            if language + "_" + type in line:
-                print(line.split()[-1])
-    avg = int(line.split()[-1])
+        s = file.readline()
+        dictionary = eval(s.replace("<class 'int'>", 'int'))
+
+    avg = dictionary[language+"_"+kind]
     return random.randrange(avg-range_around_avg, avg+range_around_avg)
 
 generated = generate_seq(model, tokenizer, seq_length, seed_text, avg_tale_length(language, kind,100))
