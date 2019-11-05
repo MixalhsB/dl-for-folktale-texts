@@ -272,19 +272,19 @@ if __name__ == "__main__":
 	
 		try:
 			# print("Average length of an animal tale: " + str(animallen / len(animaltales[language])))
-			length[language + "_animaltale"] = round(animallen / len(animaltales[language]))
+			length[language + "_animaltales"] = round(animallen / len(animaltales[language]))
 
 			# print("Number of Magic Folktales: " + str(len(magictales[language])))
 			# print("Average length of a magic tale: " + str(magiclen / len(magictales[language])))
-			length[language + "_magictale"] = round(magiclen / len(magictales[language]))
+			length[language + "_magictales"] = round(magiclen / len(magictales[language]))
 
 			# print("Number of Religious Folktales: " + str(len(religioustales[language])))
 			# print("Average length of a religious tale: " + str(religiouslen / len(religioustales[language])))
-			length[language + "_religioustale"] = round(religiouslen / len(religioustales[language]))
+			length[language + "_religioustales"] = round(religiouslen / len(religioustales[language]))
 
 			# print("Number of Realistic Folktales: " + str(len(realistictales[language])))
 			# print("Average length of a realistic tale: " + str(realisticlen / len(realistictales[language])))
-			length[language + "_realistictale"] = round(realisticlen / len(realistictales[language]))
+			length[language + "_realistictales"] = round(realisticlen / len(realistictales[language]))
 
 			# print("Number of Stupid Ogre Folktales: " + str(len(stupidogre[language])))
 			# print("Average length of a stupid ogre tale: " + str(stupidogrelen / len(stupidogre[language])))
@@ -296,7 +296,7 @@ if __name__ == "__main__":
 
 			# print("Number of Formula Folktales: " + str(len(formulatales[language])))
 			# print("Average length of an formula tale: " + str(formulalen / len(formulatales[language])))
-			length[language + "_formulatale"] = round(formulalen / len(formulatales[language]))
+			length[language + "_formulatales"] = round(formulalen / len(formulatales[language]))
 		except ZeroDivisionError:
 			pass
 		# print(length)
