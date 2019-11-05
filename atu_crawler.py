@@ -3,6 +3,7 @@ import os
 from nltk.tokenize import sent_tokenize
 from nltk.tokenize import word_tokenize
 import math
+import csv
 
 class Story:
 
@@ -85,24 +86,11 @@ if __name__ == "__main__":
 
 	counter = 0
 	unknowncounter = 0
-	animallen = 0
-	magiclen = 0
-	religiouslen = 0
-	realisticlen = 0
-	stupidogrelen = 0
-	jokeslen = 0
-	formulalen = 0
-	min_max_animallen = [math.inf,0]
-	min_max_magiclen = [math.inf,0]
-	min_max_religiouslen = [math.inf,0]
-	min_max_realisticlen = [math.inf,0]
-	min_max_stupidogrelen = [math.inf,0]
-	min_max_jokeslen = [math.inf,0]
-	min_max_formulalen = [math.inf,0]
+
 	# dictionary that saves average sentence lengths per tale type and language
 	sentence_length_average = {}
 	sentence_length_average["animaltales"] = {}
-	sentence_length_average["animaltales"] = {}
+	sentence_length_average["realistictales"] = {}
 	sentence_length_average["magictales"] = {}
 	sentence_length_average["religioustales"]= {}
 	sentence_length_average["stupidogre"] = {}
@@ -111,11 +99,28 @@ if __name__ == "__main__":
 	length = defaultdict(int)
 	title_length_average = {}
 
+	writer = csv.writer(open("statistics.csv", "w+", newline=""), delimiter='\t')
+	writer.writerow(["language", "tales", "animal", "realistic", "magic", "religious", "ogre", "jokes", "formula"])
 
 	# corpora = read_corpus('corpora.txt')
 	# corpora_no_atu = read_corpus('corpora_no_atu')
 	corpora_default = read_corpus('corpora.txt')
 	for language in corpora_default:
+		number_of_tales = len(corpora_default[language])
+		animallen = 0
+		magiclen = 0
+		religiouslen = 0
+		realisticlen = 0
+		stupidogrelen = 0
+		jokeslen = 0
+		formulalen = 0
+		min_max_animallen = [math.inf, 0]
+		min_max_magiclen = [math.inf, 0]
+		min_max_religiouslen = [math.inf, 0]
+		min_max_realisticlen = [math.inf, 0]
+		min_max_stupidogrelen = [math.inf, 0]
+		min_max_jokeslen = [math.inf, 0]
+		min_max_formulalen = [math.inf, 0]
 		for story in corpora_default[language]:
 			story = Story(story[0],story[1],story[2],story[3],story[4])
 			
@@ -224,6 +229,17 @@ if __name__ == "__main__":
 		sentence_length_average["formulatales"][language] = average_sentence_length(formulatales[language])
 		title_length_average[language + "_formulatales"] = average_title_length(formulatales[language])
 		# print("average sentence length: ", sentence_length_average)
+
+		# write into number_of_tales_statistics
+		# (["language", "tales", "animal", "realistic", "magic", "religious", "ogre", "jokes", "formula"]
+		writer.writerow([language, number_of_tales, len(animaltales[language]), len(realistictales[language]),
+						 len(magictales[language]), len(religioustales[language]),
+						 len(stupidogre[language]), len(jokes[language]), len(formulatales[language])])
+		# write number of tokens
+		sum_of_tokens = animallen + realisticlen + magiclen + religiouslen + stupidogrelen + jokeslen + formulalen
+		writer.writerow([" ", sum_of_tokens, animallen, realisticlen, magiclen, religiouslen, stupidogrelen, jokeslen,
+						 formulalen])
+
 
 		with open(dirName + "/" + language + '_corpora.txt', 'w+', encoding='utf-8') as f:
 			f.write(str(corpora[language]))
