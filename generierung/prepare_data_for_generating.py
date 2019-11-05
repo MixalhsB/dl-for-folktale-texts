@@ -115,6 +115,9 @@ if __name__ == "__main__":
     #load tales and return sequences for generating:
     languages = ["Czech", "Danish", "Dutch", "English", "French", "German", "Hungarian", "Italian", "Polish", "Russian", "Spanish"]
     os.chdir("..") # um in den vorderen Ordner zu gelangen (da dort der "clean" Ordner liegt)
+    dirName = 'sequence'
+    if not os.path.exists(dirName):
+        os.mkdir(dirName)
     for language in languages:
         animalseq = load_tales("clean/" + language + '_'+ 'animaltales_clean.txt', language, "animaltales")
         magicseq = load_tales("clean/" + language + '_'+'magictales_clean.txt', language, "magictales")
