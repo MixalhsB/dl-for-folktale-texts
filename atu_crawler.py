@@ -89,6 +89,7 @@ if __name__ == "__main__":
 
 	# dictionary that saves average sentence lengths per tale type and language
 	sentence_length_average = {}
+	min_max = {}
 	sentence_length_average["animaltales"] = {}
 	sentence_length_average["realistictales"] = {}
 	sentence_length_average["magictales"] = {}
@@ -96,6 +97,14 @@ if __name__ == "__main__":
 	sentence_length_average["stupidogre"] = {}
 	sentence_length_average["jokes"] = {}
 	sentence_length_average["formulatales"] = {}
+	min_max["animaltales"] = {}
+	min_max["realistictales"] = {}
+	min_max["magictales"] = {}
+	min_max["religioustales"] = {}
+	min_max["stupidogre"] = {}
+	min_max["jokes"] = {}
+	min_max["formulatales"] = {}
+
 	length = defaultdict(int)
 	title_length_average = {}
 
@@ -218,6 +227,8 @@ if __name__ == "__main__":
 		# print("Average sentence length: ", language + '_animaltales', average_sentence_length(animaltales[language]))
 		sentence_length_average["animaltales"][language] = average_sentence_length(animaltales[language])
 		title_length_average[language + "_animaltales"] = average_title_length(animaltales[language])
+		sentence_length_average["realistictales"][language] = average_sentence_length(animaltales[language])
+		title_length_average[language + "_realistictales"] = average_title_length(animaltales[language])
 		sentence_length_average["magictales"][language] = average_sentence_length(magictales[language])
 		title_length_average[language + "_magictales"] = average_title_length(magictales[language])
 		sentence_length_average["religioustales"][language] = average_sentence_length(religioustales[language])
@@ -229,6 +240,13 @@ if __name__ == "__main__":
 		sentence_length_average["formulatales"][language] = average_sentence_length(formulatales[language])
 		title_length_average[language + "_formulatales"] = average_title_length(formulatales[language])
 		# print("average sentence length: ", sentence_length_average)
+		min_max["animaltales"][language] = min_max_animallen
+		min_max["realistictales"][language] = min_max_realisticlen
+		min_max["magictales"][language] = min_max_magiclen
+		min_max["religioustales"][language] = min_max_religiouslen
+		min_max["stupidogre"][language] = min_max_stupidogrelen
+		min_max["jokes"][language] = min_max_jokeslen
+		min_max["formulatales"][language] = min_max_formulalen
 
 		# write into number_of_tales_statistics
 		# (["language", "tales", "animal", "realistic", "magic", "religious", "ogre", "jokes", "formula"]
@@ -290,13 +308,7 @@ if __name__ == "__main__":
 		h.write(str(title_length_average))
 
 	with open("min_max_tale_length.txt", "w+", encoding="utf-8") as file:
-		file.write("animaltales" + "\t" + " ".join(map(str,min_max_animallen)) + "\n")
-		file.write("magictales" + "\t" + " ".join(map(str,min_max_magiclen)) + "\n")
-		file.write("religioustales" + "\t" + " ".join(map(str,min_max_religiouslen)) + "\n")
-		file.write("realistictales" + "\t" + " ".join(map(str,min_max_realisticlen)) + "\n")
-		file.write("stupidogretales" + "\t" + " ".join(map(str, min_max_stupidogrelen)) + "\n")
-		file.write("jokes" + "\t" + " ".join(map(str, min_max_jokeslen)) + "\n")
-		file.write("formulatales" + "\t" + " ".join(map(str, min_max_formulalen)) + "\n")
+		file.write(str(min_max))
 
 		# print("Number of Folktales without ATU: " + str(unknowncounter))
 		# print("Number of Folktales in total: " + str(i))
