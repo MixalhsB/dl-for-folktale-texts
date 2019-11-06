@@ -15,8 +15,12 @@ def load_doc(filename):
     with open(filename, "r") as file:
         # read all text
         text = file.read()
+        tales = text.split("\n\n")
+        texts = ""
+        for item in tales:
+            texts += item.split("\n")[-1] + "\n"
         # close the file
-        return text
+        return texts
 
 
 # generate a sequence from a language model
@@ -122,7 +126,7 @@ def avg_tale_length(language, type, range_around_avg):
     :param range_around_avg: int
     :return: random number between average talelength +/- range given
     """
-    with open("average_tale_length.txt", encoding = "utf8") as file:
+    with open("../average_tale_length.txt", encoding = "utf8") as file:
         s = file.readline()
         dictionary = eval(s.replace("<class 'int'>", 'int'))
 
