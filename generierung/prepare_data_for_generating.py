@@ -50,6 +50,11 @@ def average_sentence_length(language, type):
         dictionary = eval(file.read())
     return dictionary[type][language]
 
+def average_title_length(language, type):
+    with open("average_title_length.txt", encoding="utf8") as file:
+        dictionary = eval(file.read())
+    return dictionary[type][language]
+
 # load
 def load_tales(in_filename, language, type):
     """
@@ -92,7 +97,7 @@ def load_tales(in_filename, language, type):
 
     # organize into sequences of tokens
     # as input to our model
-    title_length = 10
+    title_length = average_title_length(language, type)
     text_length = average_sentence_length(language, type) + 1
     title_sequences = list()
     text_sequences = list()
