@@ -4,7 +4,6 @@ from keras.preprocessing.text import Tokenizer
 from bs4 import BeautifulSoup
 import numpy as np
 import random
-import train_classification_model
 
 
 class Classifier:
@@ -30,4 +29,19 @@ class Classifier:
 
         return self.corpus.class_names[model.predict_classes(bin_x_test)[0]]
 
+    def book_inspired_classify(self, html_text):
+        model, vocab, tokenizer, max_length, encode_docs = self.corpus.get_trained_model_data_for_book_classifier()
+        raw_text = BeautifulSoup(html_text, "html.parser").text
+        word_sequence = self.corpus.tokenize(raw_text)
+        x_test = encode_docs(tokenizer, max_length, [' '.join([word for word in word_sequence if word in vocab])])
+        return self.corpus.class_names[model.predict_classes(x_test)[0]]
+        
+    def length_classify(self, html_text):
+        lengths = self.corpus.get_avg_story_lengths()
+        raw_text = BeautifulSoup(html_text, "html.parser").text
+        word_sequence = self.corpus.tokenize(raw_text)
+        this_length = len(word_sequence)
+        comparison = [(abs(lengths[cn] - this_length), cn) for cn in lengths]
+        comparison.sort()
+        return comparison[0][1]
 
