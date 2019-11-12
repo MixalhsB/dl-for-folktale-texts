@@ -51,7 +51,8 @@ def trainmodel(in_filename):
     doc = load_doc(in_filename)
     lines = []
     stories = doc.split("\n\n")
-    for item in stories:
+    print(stories)
+    for item in stories[:-1]:
         story = item.split("\n")
         lines.append(story[1])
 
@@ -82,11 +83,13 @@ def trainmodel(in_filename):
     # fit model
     model.fit(X, y, batch_size=128, epochs=100)
     # save the model to file
-    model.save('models/model' + in_filename + '.h5')
+    # model.save('models/model' + in_filename + '.h5')
+    model.save('models/model' + '.h5')
     # save the tokenizer
     #we need the mapping from words to integers when we load the model
     #we can save it with Pickle
-    dump(tokenizer, open('tokenizer/tokenizer' + in_filename + '.pkl', 'wb'))
+    # dump(tokenizer, open('tokenizer/tokenizer' + in_filename + '.pkl', 'wb'))
+    dump(tokenizer, open('tokenizer/tokenizer' + '.pkl', 'wb'))
 
 language = 'german'
 
