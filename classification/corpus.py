@@ -3,16 +3,22 @@
 import ast
 import string
 import unicodedata
-
 import numpy as np
 import random
 import keras
+
+from collections import defaultdict
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from bs4 import BeautifulSoup
 from keras.preprocessing.text import text_to_word_sequence, Tokenizer
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation
+from keras.utils import to_categorical
+from keras.preprocessing.sequence import pad_sequences
+from keras.layers import Embedding
+from keras.layers import Flatten
+from keras.layers.convolutional import Conv1D, MaxPooling1D
 
 
 class Corpus:
@@ -26,16 +32,9 @@ class Corpus:
         with open(filename, 'r', encoding='utf-8') as f:
             dict_syntaxed_string = f.read()
 
-        self.stories = ast.literal_eval(dict_syntaxed_string)[language]
-
-        if seed is not None:
-            random.seed(seed)
-            random.shuffle(self.stories)
-
-        self.class_names = ('animal', 'magic', 'religious', 'realistic', 'ogre', 'jokes', 'formula', 'UNKNOWN')
+        self.class_names = ('animal', 'magic', 'religious', 'realistic', 'ogre', 'jokes', 'formula')  # , 'UNKNOWN')
 
         self.test_split = test_split
-
 
         def _get_number(atu_string):
             try:
@@ -46,6 +45,12 @@ class Corpus:
                     return atu_int
             except ValueError:
                 return -1
+        
+        # Filtert jetzt UNKNOWN-Stories schon beim Einlesen des Korpus heraus:
+        self.stories = [st for st in ast.literal_eval(dict_syntaxed_string)[language] if _get_number(st[2]) != -1]
+        if seed is not None:
+            random.seed(seed)
+            random.shuffle(self.stories)
 
         # print(_get_number('UNKNOWN'))
         # assert False
@@ -90,9 +95,34 @@ class Corpus:
         self.train_stories = self.stories[x_y_test_length:]
 
         self.simple_reuters_model = None
+        self.book_model_data = (None, None, None, None, None)
 
     def __iter__(self):
         return iter(self.stories)
+
+    #######################################
+    #  NAIVE LENGTH-BASED CLASSIFICATION  #
+    #######################################
+
+    def get_avg_story_lengths(self):
+        '''Gibt ein Dictionary mit den Klassennamen
+           und deren durchschnittlicher Märchenlänge zurück'''
+        story_lengths = defaultdict(list)
+        for story in self.stories:
+            length = len(self.extract_word_sequence(story))
+            gold = self.get_gold_class_name(story)
+            if gold in story_lengths:
+                story_lengths[gold][0] += length
+                story_lengths[gold][1] += 1
+            else:
+                story_lengths[gold] = [length, 1]
+        result = {class_name: story_lengths[class_name][0] / story_lengths[class_name][1]
+                  for class_name in story_lengths}
+        return result
+    
+    #######################################
+    #    SIMPLE REUTERS CLASSIFICATION    #
+    #######################################
 
     def tokenize(self, text):
         tokens = []
@@ -191,3 +221,158 @@ class Corpus:
             self.simple_reuters_model = model
 
         return self.simple_reuters_model
+    
+    #######################################
+    #    BOOK-INSPIRED CLASSIFICATION     #
+    #######################################
+    
+    @staticmethod
+    def load_doc(file):
+        with open(file) as f:
+            document = f.read()
+        return document
+
+
+    # load an already cleaned dataset
+    def load_clean_dataset(self, vocab, is_train):
+        # language ist zB so angegeben "English"
+
+        # load documents
+
+        docs = []
+        for class_name in self.gold_classes:
+            for story in self.gold_classes[class_name]:
+                if (story in self.train_stories and is_train) or (story in self.test_stories and not is_train):
+                    docs.append(' '.join([word for word in self.extract_word_sequence(story) if word in vocab]))
+
+        # prepare labels
+        ## Labels:
+        # animal    --> 0
+        # magic     --> 1
+        # religious --> 2
+        # realistic --> 3
+        # ogre      --> 4
+        # jokes     --> 5
+        # formula   --> 6
+        # UNKNOWN   --> 7
+
+        # im Buch gibt es nur zwei Labels
+        def _amount_of_stories_in_class_of_train_or_test_subset(class_name, is_train):
+            result = 0
+            for story in self.gold_classes[class_name]:
+                if (story in self.train_stories and is_train) or (story in self.test_stories and not is_train):
+                    result += 1
+            return result
+
+        labels = np.array(
+            [0 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('animal', is_train))]
+            + [1 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('magic', is_train))]
+            + [2 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('religious', is_train))]
+            + [3 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('realistic', is_train))]
+            + [4 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('ogre', is_train))]
+            + [5 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('jokes', is_train))]
+            + [6 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('formula', is_train))])
+            # + [7 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('UNKNOWN', is_train))])
+        # print(labels)
+        return docs, labels
+
+
+    # fit a tokenizer
+    @staticmethod
+    def create_tokenizer(lines):
+        tokenizer = Tokenizer()
+        tokenizer.fit_on_texts(lines)
+        return tokenizer
+
+
+    # integer encode and pad documents
+    def encode_docs(tokenizer, max_length, docs):
+        # integer encode
+        encoded = tokenizer.texts_to_sequences(docs)
+        # pad sequences
+        padded = pad_sequences(encoded, maxlen=max_length, padding='post')
+        return padded
+
+
+    # define the model
+    @staticmethod
+    def define_model(vocab_size, max_length):
+        model = Sequential()
+        model.add(Embedding(vocab_size, 100, input_length=max_length))
+        model.add(Conv1D(filters=32, kernel_size=8, activation='relu'))
+        model.add(MaxPooling1D(pool_size=2))
+        model.add(Flatten())
+        model.add(Dense(10, activation='relu'))
+
+        # Output Layer erhält 7 Nodes, für die 7 Label
+        model.add(Dense(7, activation='sigmoid'))
+
+        # compile network
+        # model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+        model.compile(loss='categorical_crossentropy',
+                      optimizer='adam',
+                      metrics=['categorical_accuracy'])
+
+        # plot_model(model, to_file='model.png', show_shapes=True)
+        return model
+
+    def create_trained_model_data(self):
+        # load training data
+        vocab = set()
+        occurrence_count = {}
+        for story in self.stories:
+            for word in self.extract_word_sequence(story):
+                vocab.add(word)
+                if word in occurrence_count:
+                    occurrence_count[word] += 1
+                else:
+                    occurrence_count[word] = 1
+        vocab = set(sorted(vocab, reverse=True, key=lambda x: occurrence_count[x])[0:500])
+        # print(vocab)
+
+        # load all documents
+        train_docs, ytrain = self.load_clean_dataset(vocab, True)
+        test_docs, ytest = self.load_clean_dataset(vocab, False)
+
+        ytrain = to_categorical(ytrain)
+        # ytest = to_categorical(ytest)
+
+        # create the tokenizer
+        tokenizer = Corpus.create_tokenizer(train_docs)
+
+        # define vocabulary size
+        vocab_size = len(tokenizer.word_index) + 1
+        print('Vocabulary size: %d' % vocab_size)
+
+        # calculate the maximum sequence length
+        max_length = max([len(s.split()) for s in train_docs])
+        print('Maximum length: %d' % max_length)
+
+        # encode data
+        Xtrain = Corpus.encode_docs(tokenizer, max_length, train_docs)
+        # Xtest = Corpus.encode_docs(tokenizer, max_length, test_docs)
+
+        # define model
+        model = Corpus.define_model(vocab_size, max_length)
+
+        # fit network
+        model.fit(Xtrain, ytrain, epochs=5, verbose=2, validation_split=0.1)
+
+        # save the model
+        # model.save('model.h5')
+
+        # evaluate model on training dataset
+        # _, acc = model.evaluate(Xtrain, ytrain, verbose=0)
+        # print('Train Accuracy: %.2f' % (acc * 100))
+
+        # evaluate model on test dataset
+        # _, acc = model.evaluate(Xtest, ytest, verbose=0)
+        # print('Test Accuracy: %.2f' % (acc * 100))
+        
+        return model, vocab, tokenizer, max_length, Corpus.encode_docs
+
+    def get_trained_model_data_for_book_classifier(self):
+        if self.book_model_data == (None, None, None, None, None):
+            self.book_model_data = self.create_trained_model_data()
+        return self.book_model_data

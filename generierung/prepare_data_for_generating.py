@@ -104,16 +104,20 @@ def load_tales(in_filename, language, type):
     text_length = average_sentence_length(language, type) + 1
     title_sequences = list()
     text_sequences = list()
+    if title_length > len(title_tokens):
+        title_length = len(title_tokens)
     for i in range(title_length, len(title_tokens)):
-        # select sequence of tokens
         title_seq = title_tokens[i-title_length:i]
-        # convert into a line
+        
         title_line = ' '.join(title_seq)
-        # store
+        
         title_sequences.append(title_line)
     for j in range(text_length, len(text_tokens)):
+        # select sequence of tokens
         text_seq = text_tokens[j-text_length:j]
+        # convert into a line
         text_line = " ".join(text_seq)
+        # store
         text_sequences.append(text_line)
     print('Total Title Sequences: %d' % len(title_sequences))
     print("Total Text Sequences: %d" % len(text_sequences))
