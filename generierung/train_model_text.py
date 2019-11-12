@@ -51,7 +51,8 @@ def trainmodel(in_filename):
     doc = load_doc(in_filename)
     lines = []
     stories = doc.split("\n\n")
-    print(stories)
+    # print(stories)
+    # letztes Element der Sequenzen ist '', deswegen :-1
     for item in stories[:-1]:
         story = item.split("\n")
         lines.append(story[1])
