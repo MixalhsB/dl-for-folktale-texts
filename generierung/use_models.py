@@ -7,6 +7,7 @@ from pickle import load
 from keras.models import load_model
 from keras.preprocessing.sequence import pad_sequences
 from collections import defaultdict
+import sys
 
 
 # load doc into memory (training data sequences)
@@ -117,7 +118,6 @@ print(seed_text + '\n')
 # generate new text
 # how long should it be? -> average length of a tale?
 
-#TODO zusaetzlich zur durchschnittlicher satzlaenge, min und max speichern und dann eine random zahl dazwischen nehmen
 def avg_tale_length(language, type, range_around_avg):
     """
     computes a random number out of the intervall average-tale-length-range_around_avg and +range_around_avg
@@ -130,8 +130,17 @@ def avg_tale_length(language, type, range_around_avg):
         s = file.readline()
         dictionary = eval(s.replace("<class 'int'>", 'int'))
 
-    avg = dictionary[language+"_"+kind]
+    avg = dictionary[language+"_"+type]
     return random.randrange(avg-range_around_avg, avg+range_around_avg)
+
+def min_max_random(language, type):
+    with open("../min_max_tale_length.txt", encoding = "utf8") as file:
+        s = file.read()
+        dictionary = eval(s)
+        min = dictionary[type][language][0]
+        max = dictionary[type][language][1]
+        return random.randrange(min, max)
 
 generated = generate_seq(model, tokenizer, seq_length, seed_text, avg_tale_length(language, kind,100))
 print(generated)
+
