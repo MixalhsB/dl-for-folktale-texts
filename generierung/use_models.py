@@ -103,11 +103,13 @@ lines = doc.split('\n')
 seq_length = len(lines[0].split()) - 1
 
 # load the model
-model_name = "german_animaltales_model.h5"
+# model_name = "german_animaltales_model.h5"
+model_name = "model.h5"
 model = load_model("models/"+ model_name)
 
 # load the tokenizer
-tokenizer_name = "german_animaltales_tokenizer.pkl"
+# tokenizer_name = "german_animaltales_tokenizer.pkl"
+tokenizer_name = "tokenizer.pkl"
 tokenizer = load(open("tokenizer/"+ tokenizer_name, 'rb'))
 
 # select a seed text: random line of text from the input text
@@ -136,11 +138,13 @@ def avg_tale_length(language, type, range_around_avg):
 def min_max_random(language, type):
     with open("../min_max_tale_length.txt", encoding = "utf8") as file:
         s = file.read()
-        dictionary = eval(s)
+        dictionary = eval(s.replace("inf", "0"))
         min = dictionary[type][language][0]
         max = dictionary[type][language][1]
         return random.randrange(min, max)
 
-generated = generate_seq(model, tokenizer, seq_length, seed_text, avg_tale_length(language, kind,100))
+# generated = generate_seq(model, tokenizer, seq_length, seed_text, avg_tale_length(language, kind,100))
+generated = generate_seq(model, tokenizer, seq_length, seed_text, 100)
+# generated = generate_seq(model, tokenizer, seq_length, seed_text, min_max_random(language, kind))
 print(generated)
 
