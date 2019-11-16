@@ -2,6 +2,10 @@ from keras.models import Sequential
 from keras.layers import Dense
 from keras.layers import LSTM
 from keras.layers import Embedding
+from keras.utils import to_categorical
+from numpy import array
+from pickle import dump
+from keras.preprocessing.text import Tokenizer
 
 class Generator:
     """
@@ -35,40 +39,44 @@ class Generator:
         return self.model
 
 
-"""
-#EXMPL
+input_data = "sequence/german_animaltales_sequences.txt"
 
-from keras.utils import to_categorical
-from numpy import array
-from pickle import dump
-from keras.preprocessing.text import Tokenizer
-
-with open("sequence/german_animaltales_sequences.txt") as f:
+with open(input_data) as f:
     doc = f.read()
-    lines = doc.split("\n")
-    tokenizer = Tokenizer()
+    lines = []
+    stories = doc.split("\n\n")
+    # print(stories)
+    # letztes Element der Sequenzen ist '', deswegen :-1
+    for item in stories[:-1]:
+        story = item.split("\n")
+        lines.append(story[1])
+
+    # integer encode sequences of words
+    tokenizer = Tokenizer()  # create Tokenizer for encoding
     tokenizer.fit_on_texts(lines)
+    # train it on the data -> it finds all unique words and assigns each an integer
     sequences = tokenizer.texts_to_sequences(lines)
+    # make a list of integer out of each list of words
     vocab_size = len(tokenizer.word_index) + 1
     sequences = array(sequences)
     X, y = sequences[:, :-1], sequences[:, -1]
     y = to_categorical(y, num_classes=vocab_size)
     seq_length = X.shape[1]
 
-neurons1 = 100
-neurons2 = 100
-neurons3 = 100
-activation1 = "relu"
+neurons1 = 64
+neurons2 = 147
+neurons3 = 91
+activation1 = "elu"
 activation2 = "softmax"
-model1 = Generator(vocab_size, 50, seq_length, 10, neurons1, neurons2, neurons3, activation1, activation2)
+model1 = Generator(vocab_size, 50, seq_length, 85, neurons1, neurons2, neurons3, activation1, activation2)
 model = model1.create_model()
 model.summary()
-model_name = "test_model"
+model_name = "models/german_animaltales_modelNEW"
 print("model created.")
-model.fit(X, y, batch_size=50, epochs=10)
+model.fit(X, y, batch_size=128, epochs=85, verbose=0)
 model.save(model_name+".h5")
-dump(tokenizer, open('test_tokenizer.pkl', 'wb'))
-"""
+dump(tokenizer, open("tokenizers/german_animaltales_tokenizerNEW.pkl", "wb"))
+
 
 
 
