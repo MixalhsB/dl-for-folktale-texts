@@ -121,7 +121,7 @@ seq_length = average_sentence_length(language, kind)
 model = load_model("models/"+language+"_"+kind+'_model.h5')
 
 # load the tokenizer
-tokenizer = load(open("tokenizers/"+language+"_"+kind+"_tokenizerNEW.pkl", 'rb'))
+tokenizer = load(open("tokenizer/"+language+"_"+kind+"_tokenizer.pkl", 'rb'))
 
 # select a seed text: random line of text from the input text
 # maybe the first line?

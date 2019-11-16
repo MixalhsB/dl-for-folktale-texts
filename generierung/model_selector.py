@@ -1,5 +1,5 @@
 import numpy as np
-from generator import Generator
+from model_generator import Generator
 import pandas as pd
 
 class Selector:

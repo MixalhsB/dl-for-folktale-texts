@@ -38,7 +38,7 @@ class Generator:
     def create_model(self):
         return self.model
 
-
+'''
 input_data = "sequence/german_animaltales_sequences.txt"
 
 with open(input_data) as f:
@@ -76,7 +76,7 @@ print("model created.")
 model.fit(X, y, batch_size=128, epochs=85, verbose=0)
 model.save(model_name+".h5")
 dump(tokenizer, open("tokenizers/german_animaltales_tokenizerNEW.pkl", "wb"))
-
+'''
 
 
 
