@@ -139,6 +139,7 @@ def min_max_random(language, type):
     with open("../min_max_tale_length.txt", encoding = "utf8") as file:
         s = file.read()
         dictionary = eval(s.replace("inf", "0"))
+        #TODO language.upper
         min = dictionary[type][language][0]
         max = dictionary[type][language][1]
         return random.randrange(min, max)
