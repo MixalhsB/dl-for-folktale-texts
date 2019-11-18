@@ -115,7 +115,7 @@ lines = doc.split('\n')
 
 #minus output word
 #input of the model has to be as long as seq_length
-seq_length = average_sentence_length(language, kind)
+seq_length = average_sentence_length("German", kind)
 
 # load the model
 model = load_model("models/"+language+"_"+kind+'_model.h5')
@@ -155,7 +155,7 @@ def min_max_random(language, type):
         return random.randrange(min, max)
 
 # generated = generate_seq(model, tokenizer, seq_length, seed_text, avg_tale_length(language, kind,100))
-generated = Generate(model, tokenizer, seq_length, seed_text, avg_tale_length(language, kind, min_max_random(language, kind)))
+generated = Generate(model, tokenizer, seq_length, seed_text, avg_tale_length("German", kind, min_max_random("German", kind)))
 # generated = generate_seq(model, tokenizer, seq_length, seed_text, min_max_random(language, kind))
 print(generated.generate_seq())
 

@@ -38,8 +38,8 @@ class Generator:
     def create_model(self):
         return self.model
 
-'''
-input_data = "sequence/german_animaltales_sequences.txt"
+
+input_data = "sequence/german_religioustales_sequences.txt"
 
 with open(input_data) as f:
     doc = f.read()
@@ -63,20 +63,20 @@ with open(input_data) as f:
     y = to_categorical(y, num_classes=vocab_size)
     seq_length = X.shape[1]
 
-neurons1 = 64
-neurons2 = 147
-neurons3 = 91
+neurons1 = 135
+neurons2 = 161
+neurons3 = 155
 activation1 = "elu"
 activation2 = "softmax"
-model1 = Generator(vocab_size, 50, seq_length, 85, neurons1, neurons2, neurons3, activation1, activation2)
+model1 = Generator(vocab_size, 50, seq_length, 86, neurons1, neurons2, neurons3, activation1, activation2)
 model = model1.create_model()
 model.summary()
-model_name = "models/german_animaltales_modelNEW"
+model_name = "models/german_religioustales_model"
 print("model created.")
 model.fit(X, y, batch_size=128, epochs=85, verbose=0)
 model.save(model_name+".h5")
-dump(tokenizer, open("tokenizers/german_animaltales_tokenizerNEW.pkl", "wb"))
-'''
+dump(tokenizer, open("tokenizer/german_religioustales_tokenizer.pkl", "wb"))
+
 
 
 
