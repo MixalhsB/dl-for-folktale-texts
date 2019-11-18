@@ -24,30 +24,45 @@ def load_doc(filename):
         return texts
 
 
-# generate a sequence from a language model
-def generate_seq(model, tokenizer, seq_length, seed_text, n_words):
-    result = list()
-    in_text = seed_text
-    # generate a fixed number of words
-    for _ in range(n_words):
-        # encode the text as integer
-        encoded = tokenizer.texts_to_sequences([in_text])[0]
-        # truncate sequences to a fixed length
-        encoded = pad_sequences([encoded], maxlen=seq_length, truncating='pre')
-        # predict probabilities for each word
-        yhat = model.predict_classes(encoded, verbose=0)
-        #returns index of word with the highest probability
-        
-        # map predicted word index to word
-        out_word = ''
-        for word, index in tokenizer.word_index.items():
-            if index == yhat:
-                out_word = word
-                break
-        # append to input
-        in_text += ' ' + out_word
-        result.append(out_word)
-    return ' '.join(result)
+def average_sentence_length(language, type):
+    with open("../average_sentence_length.txt", encoding="utf8") as file:
+        dictionary = eval(file.read())
+    return dictionary[type][language]
+
+
+class Generate:
+
+    def __init__(self, model, tokenizer, seq_length, seed_text, n_words):
+        self.model = model
+        self.tokenizer = tokenizer
+        self.len = seq_length
+        self.seed = seed_text
+        self.words = n_words
+
+    # generate a sequence from a language model
+    def generate_seq(self):
+        result = list()
+        in_text = seed_text
+        # generate a fixed number of words
+        for _ in range(self.words):
+            # encode the text as integer
+            encoded = self.tokenizer.texts_to_sequences([in_text])[0]
+            # truncate sequences to a fixed length
+            encoded = pad_sequences([encoded], maxlen=seq_length, truncating='pre')
+            # predict probabilities for each word
+            yhat = self.model.predict_classes(encoded, verbose=0)
+            # returns index of word with the highest probability
+
+            # map predicted word index to word
+            out_word = ''
+            for word, index in self.tokenizer.word_index.items():
+                if index == yhat:
+                    out_word = word
+                    break
+            # append to input
+            in_text += ' ' + out_word
+            result.append(out_word)
+        return ' '.join(result)
 
 
 # load cleaned text sequences
@@ -100,17 +115,13 @@ lines = doc.split('\n')
 
 #minus output word
 #input of the model has to be as long as seq_length
-seq_length = len(lines[0].split()) - 1
+seq_length = average_sentence_length("German", kind)
 
 # load the model
-# model_name = "german_animaltales_model.h5"
-model_name = "model.h5"
-model = load_model("models/"+ model_name)
+model = load_model("models/"+language+"_"+kind+'_model.h5')
 
 # load the tokenizer
-# tokenizer_name = "german_animaltales_tokenizer.pkl"
-tokenizer_name = "tokenizer.pkl"
-tokenizer = load(open("tokenizer/"+ tokenizer_name, 'rb'))
+tokenizer = load(open("tokenizer/"+language+"_"+kind+"_tokenizer.pkl", 'rb'))
 
 # select a seed text: random line of text from the input text
 # maybe the first line?
@@ -145,7 +156,7 @@ def min_max_random(language, type):
         return random.randrange(min, max)
 
 # generated = generate_seq(model, tokenizer, seq_length, seed_text, avg_tale_length(language, kind,100))
-generated = generate_seq(model, tokenizer, seq_length, seed_text, 100)
+generated = Generate(model, tokenizer, seq_length, seed_text, avg_tale_length("German", kind, min_max_random("German", kind)))
 # generated = generate_seq(model, tokenizer, seq_length, seed_text, min_max_random(language, kind))
-print(generated)
+print(generated.generate_seq())
 

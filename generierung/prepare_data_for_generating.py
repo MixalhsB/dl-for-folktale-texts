@@ -23,12 +23,12 @@ def clean_doc(doc):
     # split into tokens by white space
     tokens = doc.split()
     # prepare regex for char filtering
-    re_punc = re.compile('[%s]' % re.escape(string.punctuation))
+    re_punc = re.compile('[%s]' % re.escape('''"#$%&'()*+, -/:;<=>@[\]^_`{|}~'''))
     # remove punctuation from each word
     #TODO remove punctuation here
     tokens = [re_punc.sub('', w) for w in tokens]
     # remove remaining tokens that are not alphabetic
-    tokens = [word for word in tokens if word.isalpha()]
+    #tokens = [word for word in tokens if word.isalpha()]
     # remove html Tags <p> and <br>
     tokens = [word for word in tokens if word != 'p' and word != 'br']
     # make lower case
