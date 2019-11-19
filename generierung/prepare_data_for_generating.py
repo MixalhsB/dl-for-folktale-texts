@@ -42,7 +42,6 @@ def save_doc(lines, filename):
     text = lines[1]
     length = len(title)
     data = ""
-    # TODO aböndern, fuehrt zu dublicate sequences; außerdem wollen wir Titel getrennt vom Text generieren
     for i in range(0,length):
         data += title[i] + "\n" + text[i] + "\n\n"
     with open(filename, 'w+', encoding = 'utf-8') as f:
