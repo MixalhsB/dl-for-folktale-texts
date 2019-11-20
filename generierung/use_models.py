@@ -117,11 +117,12 @@ lines = doc.split('\n')
 #input of the model has to be as long as seq_length
 seq_length = average_sentence_length("German", kind)
 
-# load the model
+# load the models
 model = load_model("models/"+language+"_"+kind+'_model.h5')
-
-# load the tokenizer
+title_model = load_model("models/"+language+"_"+kind+'_model_title.h5')
+# load the tokenizers
 tokenizer = load(open("tokenizer/"+language+"_"+kind+"_tokenizer.pkl", 'rb'))
+title_tokenizer = load(open("tokenizer/"+language+"_"+kind+"_tokenizer_title.pkl", 'rb'))
 
 # select a seed text: random line of text from the input text
 # maybe the first line?
@@ -155,7 +156,8 @@ def min_max_random(language, type):
         max = dictionary[type][language][1]
         return random.randrange(min, max)
 
-# generated = generate_seq(model, tokenizer, seq_length, seed_text, avg_tale_length(language, kind,100))
+# generated = Generate(title_model, title_tokenizer, seq_length, seed_text, 5)
+# generated = Generate(title_model, title_tokenizer, seq_length, seed_text, avg_tale_length("German", kind, min_max_random("German", kind)))
 generated = Generate(model, tokenizer, seq_length, seed_text, avg_tale_length("German", kind, min_max_random("German", kind)))
 # generated = generate_seq(model, tokenizer, seq_length, seed_text, min_max_random(language, kind))
 print(generated.generate_seq())
