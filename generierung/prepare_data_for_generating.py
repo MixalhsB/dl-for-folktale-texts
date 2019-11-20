@@ -38,14 +38,30 @@ def clean_doc(doc):
 
 # save tokens to file, one dialog per line
 def save_doc(lines, filename):
-    title = lines[0]
-    text = lines[1]
-    length = len(title)
-    data = ""
-    for i in range(0,length):
-        data += title[i] + "\n" + text[i] + "\n\n"
-    with open(filename, 'w+', encoding = 'utf-8') as f:
-        f.write(data)
+    title_sequences = lines[0]
+    text_sequences = lines[1]
+    # length = len(title)
+    # data = ""
+    # wieso wurde hier ueber die Titellaenge iteriert?
+    # dadurch gehen Textsequenzen verloren!
+    # for i in range(0,length):
+        # data += title[i] + "\n" + text[i] + "\n\n"
+    # with open(filename, 'w+', encoding = 'utf-8') as f:
+    #    f.write(data)
+
+    data = '\n'.join(title_sequences)
+    # print(data)
+    file = open(filename[:-4] + "_title.txt", 'w', encoding='utf-8')
+    file.write(data)
+    file.close()
+
+    data = '\n'.join(text_sequences)
+    # print(data)
+    file = open(filename, 'w', encoding='utf-8')
+    file.write(data)
+    file.close()
+
+    # print([len(i.split()) for i in text_sequences])
 
 def average_sentence_length(language, type):
     with open("average_sentence_length.txt", encoding="utf8") as file:
@@ -89,8 +105,8 @@ def load_tales(in_filename, language, type):
     for title, text in tales.items():
         title_tokens += clean_doc(title)
         text_tokens += clean_doc(text)
-    print(title_tokens[:200])
-    print(text_tokens[:200])
+    # print(title_tokens[:200])
+    # print(text_tokens[:200])
     print('Total Title Tokens: %d' % len(title_tokens))
     print('Total Text Tokens: %d' % len(text_tokens))
     print('Unique Title Tokens: %d' % len(set(title_tokens))) #Vocabulary size
@@ -99,8 +115,9 @@ def load_tales(in_filename, language, type):
 
     # organize into sequences of tokens
     # as input to our model
-    title_length = average_title_length(language, type)
+    title_length = average_title_length(language, type) + 1
     text_length = average_sentence_length(language, type) + 1
+    print(text_length)
     title_sequences = list()
     text_sequences = list()
     if title_length > len(title_tokens):
@@ -126,6 +143,7 @@ def load_tales(in_filename, language, type):
 if __name__ == "__main__":
     #load tales and return sequences for generating:
     languages = ["Czech", "Danish", "Dutch", "English", "French", "German", "Hungarian", "Italian", "Polish", "Russian", "Spanish"]
+    #languages = ["German"]
     os.chdir("..") # um in den vorderen Ordner zu gelangen (da dort der "clean" Ordner liegt)
     dirName = 'sequence'
     if not os.path.exists(dirName):
