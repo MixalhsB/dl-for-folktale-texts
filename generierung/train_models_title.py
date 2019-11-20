@@ -49,10 +49,11 @@ def trainmodel(in_filename):
     # load
     #in_filename = 'republic_sequences.txt'
     doc = load_doc(in_filename)
-    line = doc.split('\n\n')
-    lines = []
-    for item in line:
-        lines += line.split("\n")
+    lines = doc.split("\n")
+    # line = doc.split('\n\n')
+    # lines = []
+    # for item in line:
+    #    lines += line.split("\n")
 
     # integer encode sequences of words
     tokenizer = Tokenizer() #create Tokenizer for encoding
@@ -70,6 +71,10 @@ def trainmodel(in_filename):
 
     # separate into input and output
     sequences = array(sequences)
+    print(sequences.shape)
+    print("sequences: ", sequences)
+    print(sequences[:, :-1])
+    print(sequences[:, -1])
     X, y = sequences[:,:-1], sequences[:,-1]
     #one hot encode output word -> vector with lots of 0 and a 1 for the word itself
     y = to_categorical(y, num_classes=vocab_size)
@@ -81,18 +86,23 @@ def trainmodel(in_filename):
     # fit model
     model.fit(X, y, batch_size=128, epochs=100)
     # save the model to file
-    model.save('models/model' + in_filename + '.h5')
+    model_name = in_filename.split("/")[-1]
+    model_name = model_name[:-4] # txt Endung
+    model_name = model_name.replace("sequences", "model")
+    # print(model_name)
+    model.save('models/' + model_name + '.h5')
     # save the tokenizer
     #we need the mapping from words to integers when we load the model
     #we can save it with Pickle
-    dump(tokenizer, open('tokenizer/tokenizer' + in_filename + '.pkl', 'wb'))
+    model_name = model_name.replace("model", "tokenizer")
+    dump(tokenizer, open('tokenizer/' + model_name + '.pkl', 'wb'))
 
 language = 'german'
 
 # trainmodel("sequence/" + language + '_' +'animaltales_sequences.txt')
 # trainmodel("sequence/" + language + '_'+'magictales_sequences.txt') # MemoryError
 ##
-trainmodel("sequence/" + language + '_'+'religioustales_sequences.txt')
+trainmodel("sequence/" + language + '_'+'religioustales_sequences_title.txt')
 ##
 ##trainmodel("sequence/" + language + '_'+'realistictales_sequences.txt')
 ##trainmodel("sequence/" + language + '_'+'stupidogre_sequences.txt')
