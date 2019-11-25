@@ -28,7 +28,8 @@ def clean_doc(doc):
     #TODO remove punctuation here
     tokens = [re_punc.sub('', w) for w in tokens]
     # remove remaining tokens that are not alphabetic
-    #tokens = [word for word in tokens if word.isalpha()]
+    # DON'T uncomment this operation -> leads to inconsistent sequence lengths
+    tokens = [word for word in tokens if word.isalpha()]
     # remove html Tags <p> and <br>
     tokens = [word for word in tokens if word != 'p' and word != 'br']
     # make lower case
@@ -48,7 +49,7 @@ def save_doc(lines, filename):
         # data += title[i] + "\n" + text[i] + "\n\n"
     # with open(filename, 'w+', encoding = 'utf-8') as f:
     #    f.write(data)
-
+    # print("seq length in save doc", [len(i.split()) for i in text_sequences])
     data = '\n'.join(title_sequences)
     # print(data)
     file = open(filename[:-4] + "_title.txt", 'w', encoding='utf-8')
@@ -140,10 +141,11 @@ def load_tales(in_filename, language, type):
 
     return (title_sequences, text_sequences)
 
+
 if __name__ == "__main__":
     #load tales and return sequences for generating:
     languages = ["Czech", "Danish", "Dutch", "English", "French", "German", "Hungarian", "Italian", "Polish", "Russian", "Spanish"]
-    #languages = ["German"]
+    # languages = ["German"]
     os.chdir("..") # um in den vorderen Ordner zu gelangen (da dort der "clean" Ordner liegt)
     dirName = 'sequence'
     if not os.path.exists(dirName):
