@@ -4,7 +4,7 @@ import evaluator
 
 
 if __name__ == '__main__':
-    corpus = corpus.Corpus('../corpora.dict', 'German', seed=123)
+    corpus = corpus.Corpus('../corpora.dict', 'German', seed=123, binary_mode=True)
     clsf = classifier.Classifier(corpus)
     eval_dumb = evaluator.Evaluator(corpus, clsf.dumb_classify)
     eval_reuters = evaluator.Evaluator(corpus, clsf.simple_reuters_classify)

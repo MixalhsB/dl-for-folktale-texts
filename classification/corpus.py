@@ -23,7 +23,9 @@ from keras.layers.convolutional import Conv1D, MaxPooling1D
 
 class Corpus:
 
-    def __init__(self, filename, language, test_split=0.2, seed=123, exclude_stop_words=False):
+    def __init__(self, filename, language, test_split=0.2, seed=123, exclude_stop_words=False, binary_mode=False):
+        self.binary_mode = binary_mode
+
         if exclude_stop_words:
             self.stop_words = stopwords.words(language)
         else:
@@ -32,7 +34,10 @@ class Corpus:
         with open(filename, 'r', encoding='utf-8') as f:
             dict_syntaxed_string = f.read()
 
-        self.class_names = ('animal', 'magic', 'religious', 'realistic', 'ogre', 'jokes', 'formula')  # , 'UNKNOWN')
+        if self.binary_mode:
+            self.class_names = ('non-magic', 'magic')
+        else:
+            self.class_names = ('animal', 'magic', 'religious', 'realistic', 'ogre', 'jokes', 'formula')  # , 'UNKNOWN')
 
         self.test_split = test_split
 
@@ -45,15 +50,12 @@ class Corpus:
                     return atu_int
             except ValueError:
                 return -1
-        
+
         # Filtert jetzt UNKNOWN-Stories schon beim Einlesen des Korpus heraus:
         self.stories = [st for st in ast.literal_eval(dict_syntaxed_string)[language] if _get_number(st[2]) != -1]
         if seed is not None:
             random.seed(seed)
             random.shuffle(self.stories)
-
-        # print(_get_number('UNKNOWN'))
-        # assert False
 
         def _get_atu_range(class_name):
             if class_name == 'animal':
@@ -74,11 +76,19 @@ class Corpus:
                 return -1, -1
 
         def _is_atu_in_range(atu_string, class_name):
-            try:
-                minimum, maximum = _get_atu_range(class_name)
-                return minimum <= _get_number(atu_string) <= maximum
-            except AssertionError:
-                return True
+            if self.binary_mode:
+                magic_minimum, magic_maximum = _get_atu_range('magic')
+                if class_name == 'magic':
+                    return magic_minimum <= _get_number(atu_string) <= magic_maximum
+                elif class_name == 'non-magic':
+                    return 1 <= _get_number(atu_string) < magic_minimum \
+                           or magic_maximum < _get_number(atu_string) <= 2399
+            else:
+                try:
+                    minimum, maximum = _get_atu_range(class_name)
+                    return minimum <= _get_number(atu_string) <= maximum
+                except AssertionError:
+                    return True
 
         def _get_stories_of_class(class_name):
             return [story for story in self.stories if _is_atu_in_range(story[2], class_name)]
@@ -105,8 +115,8 @@ class Corpus:
     #######################################
 
     def get_avg_story_lengths(self):
-        '''Gibt ein Dictionary mit den Klassennamen
-           und deren durchschnittlicher Märchenlänge zurück'''
+        # Gibt ein Dictionary mit den Klassennamen
+        # und deren durchschnittlicher Märchenlänge zurück
         story_lengths = defaultdict(list)
         for story in self.stories:
             length = len(self.extract_word_sequence(story))
@@ -119,7 +129,7 @@ class Corpus:
         result = {class_name: story_lengths[class_name][0] / story_lengths[class_name][1]
                   for class_name in story_lengths}
         return result
-    
+
     #######################################
     #    SIMPLE REUTERS CLASSIFICATION    #
     #######################################
@@ -176,6 +186,7 @@ class Corpus:
         return [self.w2i_dict[word] for word in word_sequence]
 
     def get_gold_class_name(self, story):
+        # TODO: why so complicated?
         this_story_id = story[1]
         for class_name in self.class_names:
             for any_story in self.gold_classes[class_name]:
@@ -193,6 +204,7 @@ class Corpus:
 
         return (x_train, y_train), (x_test, y_test)
 
+    # TODO: general everywhere: explain code segments
     def get_binary_transformed_train_and_test_data(self, max_words=10000):
         (x_train, y_train), (x_test, y_test) = self.get_train_and_test_data()
         tokenizer = Tokenizer(num_words=max_words)
@@ -213,7 +225,11 @@ class Corpus:
             model.add(Dense(len(self.class_names)))
             model.add(Activation('softmax'))
 
-            model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+            # TODO: how meaningful is this?
+            if self.binary_mode:
+                model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+            else:
+                model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['categorical_accuracy'])
 
             binary_transformed_data = self.get_binary_transformed_train_and_test_data(max_words)
             (bin_x_train, bin_y_train), (bin_x_test, bin_y_test) = binary_transformed_data
@@ -221,22 +237,20 @@ class Corpus:
             self.simple_reuters_model = model
 
         return self.simple_reuters_model
-    
+
     #######################################
     #    BOOK-INSPIRED CLASSIFICATION     #
     #######################################
-    
+
     @staticmethod
     def load_doc(file):
         with open(file) as f:
             document = f.read()
         return document
 
-
     # load an already cleaned dataset
     def load_clean_dataset(self, vocab, is_train):
         # language ist zB so angegeben "English"
-
         # load documents
 
         docs = []
@@ -264,18 +278,23 @@ class Corpus:
                     result += 1
             return result
 
-        labels = np.array(
-            [0 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('animal', is_train))]
-            + [1 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('magic', is_train))]
-            + [2 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('religious', is_train))]
-            + [3 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('realistic', is_train))]
-            + [4 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('ogre', is_train))]
-            + [5 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('jokes', is_train))]
-            + [6 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('formula', is_train))])
+        if self.binary_mode:
+            labels = np.array(
+                [0 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('non-magic', is_train))]
+                + [1 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('magic', is_train))])
+        else:
+            labels = np.array(
+                [0 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('animal', is_train))]
+                + [1 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('magic', is_train))]
+                + [2 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('religious', is_train))]
+                + [3 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('realistic', is_train))]
+                + [4 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('ogre', is_train))]
+                + [5 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('jokes', is_train))]
+                + [6 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('formula', is_train))])
             # + [7 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('UNKNOWN', is_train))])
-        # print(labels)
-        return docs, labels
+            # print(labels)
 
+        return docs, labels
 
     # fit a tokenizer
     @staticmethod
@@ -283,7 +302,6 @@ class Corpus:
         tokenizer = Tokenizer()
         tokenizer.fit_on_texts(lines)
         return tokenizer
-
 
     # integer encode and pad documents
     def encode_docs(tokenizer, max_length, docs):
@@ -293,10 +311,8 @@ class Corpus:
         padded = pad_sequences(encoded, maxlen=max_length, padding='post')
         return padded
 
-
     # define the model
-    @staticmethod
-    def define_model(vocab_size, max_length):
+    def define_model(self, vocab_size, max_length):
         model = Sequential()
         model.add(Embedding(vocab_size, 100, input_length=max_length))
         model.add(Conv1D(filters=32, kernel_size=8, activation='relu'))
@@ -304,15 +320,20 @@ class Corpus:
         model.add(Flatten())
         model.add(Dense(10, activation='relu'))
 
-        # Output Layer erhält 7 Nodes, für die 7 Label
-        model.add(Dense(7, activation='sigmoid'))
+        if self.binary_mode:
+            model.add(Dense(2, activation='sigmoid')) # TODO: warum 1 statt 2, buchinspiriert
+            model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 
-        # compile network
-        # model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+        else:
+            # Output Layer erhält 7 Nodes, für die 7 Label
+            model.add(Dense(7, activation='sigmoid'))
 
-        model.compile(loss='categorical_crossentropy',
-                      optimizer='adam',
-                      metrics=['categorical_accuracy'])
+            # compile network
+            # model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+            model.compile(loss='categorical_crossentropy',
+                          optimizer='adam',
+                          metrics=['categorical_accuracy'])
 
         # plot_model(model, to_file='model.png', show_shapes=True)
         return model
@@ -354,7 +375,7 @@ class Corpus:
         # Xtest = Corpus.encode_docs(tokenizer, max_length, test_docs)
 
         # define model
-        model = Corpus.define_model(vocab_size, max_length)
+        model = self.define_model(vocab_size, max_length)
 
         # fit network
         model.fit(Xtrain, ytrain, epochs=5, verbose=2, validation_split=0.1)
@@ -369,7 +390,7 @@ class Corpus:
         # evaluate model on test dataset
         # _, acc = model.evaluate(Xtest, ytest, verbose=0)
         # print('Test Accuracy: %.2f' % (acc * 100))
-        
+
         return model, vocab, tokenizer, max_length, Corpus.encode_docs
 
     def get_trained_model_data_for_book_classifier(self):
