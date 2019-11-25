@@ -71,10 +71,10 @@ def trainmodel(in_filename):
 
     # separate into input and output
     sequences = array(sequences)
-    print(sequences.shape)
-    print("sequences: ", sequences)
-    print(sequences[:, :-1])
-    print(sequences[:, -1])
+    # print(sequences.shape)
+    # print("sequences: ", sequences)
+    # print(sequences[:, :-1])
+    # print(sequences[:, -1])
     X, y = sequences[:,:-1], sequences[:,-1]
     #one hot encode output word -> vector with lots of 0 and a 1 for the word itself
     y = to_categorical(y, num_classes=vocab_size)
@@ -102,9 +102,9 @@ language = 'german'
 # trainmodel("sequence/" + language + '_' +'animaltales_sequences.txt')
 # trainmodel("sequence/" + language + '_'+'magictales_sequences.txt') # MemoryError
 ##
-trainmodel("sequence/" + language + '_'+'religioustales_sequences_title.txt')
+# trainmodel("sequence/" + language + '_'+'religioustales_sequences_title.txt')
 ##
-##trainmodel("sequence/" + language + '_'+'realistictales_sequences.txt')
+trainmodel("sequence/" + language + '_'+'realistictales_sequences_title.txt')
 ##trainmodel("sequence/" + language + '_'+'stupidogre_sequences.txt')
 ##
 ##trainmodel("sequence/" + language + '_'+'jokes_sequences.txt')

@@ -50,8 +50,8 @@ def trainmodel(in_filename):
     #in_filename = 'republic_sequences.txt'
     doc = load_doc(in_filename)
     lines = doc.split('\n')
-    print(lines)
-    print([len(i.split()) for i in lines])
+    # print(lines)
+    # print([len(i.split()) for i in lines])
     # lines = []
     # stories = doc.split("\n\n")
     # print(stories)
@@ -81,13 +81,13 @@ def trainmodel(in_filename):
         #list = array(list)
        # new_sequences.append(list)
     #print(new_sequences)
-    print(len(sequences))
-    print([len(i) for i in sequences])
+    # print(len(sequences))
+    # print([len(i) for i in sequences])
     sequences = array(sequences)
-    print(sequences.shape)
-    print("sequences: ", sequences)
-    print(sequences[:,:-1])
-    print(sequences[:,-1])
+    # print(sequences.shape)
+    # print("sequences: ", sequences)
+    # print(sequences[:,:-1])
+    # print(sequences[:,-1])
     X, y = sequences[:,:-1], sequences[:,-1]
     #one hot encode output word -> vector with lots of 0 and a 1 for the word itself
     y = to_categorical(y, num_classes=vocab_size)
@@ -103,7 +103,7 @@ def trainmodel(in_filename):
     model_name = in_filename.split("/")[-1]
     model_name = model_name[:-4]  # txt Endung
     model_name = model_name.replace("sequences", "model")
-    model.save('models/model' + model_name+ '.h5')
+    model.save('models/model_name+ '.h5')
     # save the tokenizer
     #we need the mapping from words to integers when we load the model
     #we can save it with Pickle
