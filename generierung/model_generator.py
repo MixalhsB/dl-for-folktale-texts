@@ -39,18 +39,24 @@ class Generator:
         return self.model
 
 
-input_data = "sequence/german_religioustales_sequences.txt"
+def load_doc(filename):
+    # open the file as read only
+    file = open(filename, 'r')
+    # read all text
+    text = file.read()
+    # close the file
+    file.close()
+    return text
+
+
+"""
+input_data = "sequence/German_animaltales_sequences.txt"
 
 with open(input_data) as f:
-    doc = f.read()
-    lines = []
-    stories = doc.split("\n\n")
+    doc = load_doc(input_data)
+    lines = doc.split('\n')
     # print(stories)
     # letztes Element der Sequenzen ist '', deswegen :-1
-    for item in stories[:-1]:
-        story = item.split("\n")
-        lines.append(story[1])
-
     # integer encode sequences of words
     tokenizer = Tokenizer()  # create Tokenizer for encoding
     tokenizer.fit_on_texts(lines)
@@ -63,24 +69,17 @@ with open(input_data) as f:
     y = to_categorical(y, num_classes=vocab_size)
     seq_length = X.shape[1]
 
-neurons1 = 135
-neurons2 = 161
-neurons3 = 155
+neurons1 = 64
+neurons2 = 147
+neurons3 = 91
 activation1 = "elu"
 activation2 = "softmax"
-model1 = Generator(vocab_size, 50, seq_length, 86, neurons1, neurons2, neurons3, activation1, activation2)
+model1 = Generator(vocab_size, 50, seq_length, 85, neurons1, neurons2, neurons3, activation1, activation2)
 model = model1.create_model()
 model.summary()
-model_name = "models/german_religioustales_model"
+model_name = "models/german_animaltales_model"
 print("model created.")
-model.fit(X, y, batch_size=128, epochs=85, verbose=0)
+model.fit(X, y, batch_size=128, epochs=85)
 model.save(model_name+".h5")
-dump(tokenizer, open("tokenizer/german_religioustales_tokenizer.pkl", "wb"))
-
-
-
-
-
-
-
-
+dump(tokenizer, open("tokenizer/german_animaltales_tokenizer.pkl", "wb"))
+"""
