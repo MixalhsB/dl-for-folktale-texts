@@ -1,0 +1,8 @@
+model parameters
+--German--
+Animaltales: loss:1.1117311771238958;accuracy:0.7150684931579427	params:dict_items([('epochs', 85), ('LSTM_neurons1', 64), ('LSTM_neurons2', 147), ('Dense_neurons', 91), ('activation1', 'elu'), ('activation2', 'softmax')])
+Religioustales: loss: 1.884797297294031;accuracy: 0.5264301231855245;Parameters: dict_items([('epochs', 49), ('LSTM_neurons1', 106), ('LSTM_neurons2', 158), ('Dense_neurons', 181), ('activation1', 'elu'), ('activation2', 'softmax')])
+Realistictales:
+Stupid Ogre: loss: 0.7262592092753967;accuracy: 0.8818066694807936;Parameters: dict_items([('epochs', 99), ('LSTM_neurons1', 78), ('LSTM_neurons2', 193), ('Dense_neurons', 171), ('activation1', 'tanh'), ('activation2', 'softmax')])
+Jokes: loss: 1.5407913165810423;accuracy: 0.6174681951628688;Parameters: dict_items([('epochs', 93), ('LSTM_neurons1', 100), ('LSTM_neurons2', 153), ('Dense_neurons', 129), ('activation1', 'relu'), ('activation2', 'softmax')])
+Formulatales:
