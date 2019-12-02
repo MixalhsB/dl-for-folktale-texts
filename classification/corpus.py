@@ -204,14 +204,17 @@ class Corpus:
 
         return (x_train, y_train), (x_test, y_test)
 
-    # TODO: general everywhere: explain code segments
     def get_binary_transformed_train_and_test_data(self, max_words=10000):
         (x_train, y_train), (x_test, y_test) = self.get_train_and_test_data()
         tokenizer = Tokenizer(num_words=max_words)
         bin_x_train = tokenizer.sequences_to_matrix(x_train, mode='binary')
         bin_x_test = tokenizer.sequences_to_matrix(x_test, mode='binary')
-        bin_y_train = keras.utils.to_categorical(y_train, len(self.class_names))
-        bin_y_test = keras.utils.to_categorical(y_test, len(self.class_names))
+        if self.binary_mode:
+            bin_y_train = y_train
+            bin_y_test = y_test
+        else:
+            bin_y_train = keras.utils.to_categorical(y_train, len(self.class_names))
+            bin_y_test = keras.utils.to_categorical(y_test, len(self.class_names))
         return (bin_x_train, bin_y_train), (bin_x_test, bin_y_test)
 
     def get_trained_model_for_simple_reuters_classifier(self):
@@ -222,18 +225,19 @@ class Corpus:
             model.add(Dense(512, input_shape=(max_words,)))
             model.add(Activation('relu'))
             model.add(Dropout(0.5))
-            model.add(Dense(len(self.class_names)))
-            model.add(Activation('softmax'))
+            model.add(Dense(1 if self.binary_mode else len(self.class_names)))
+            model.add(Activation('sigmoid' if self.binary_mode else 'softmax'))
 
             # TODO: how meaningful is this?
             if self.binary_mode:
-                model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+                model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['binary_accuracy'])
             else:
                 model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['categorical_accuracy'])
 
             binary_transformed_data = self.get_binary_transformed_train_and_test_data(max_words)
             (bin_x_train, bin_y_train), (bin_x_test, bin_y_test) = binary_transformed_data
-            model.fit(bin_x_train, bin_y_train, batch_size=32, epochs=2, verbose=1, validation_split=0.1)
+            model.fit(bin_x_train, bin_y_train, batch_size=(None if self.binary_mode else 32), epochs=2, verbose=1,
+                      validation_split=0.1)
             self.simple_reuters_model = model
 
         return self.simple_reuters_model
@@ -280,8 +284,8 @@ class Corpus:
 
         if self.binary_mode:
             labels = np.array(
-                [0 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('non-magic', is_train))]
-                + [1 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('magic', is_train))])
+                [0.0 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('non-magic', is_train))]
+                + [1.0 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('magic', is_train))])
         else:
             labels = np.array(
                 [0 for _ in range(_amount_of_stories_in_class_of_train_or_test_subset('animal', is_train))]
@@ -321,12 +325,12 @@ class Corpus:
         model.add(Dense(10, activation='relu'))
 
         if self.binary_mode:
-            model.add(Dense(2, activation='sigmoid')) # TODO: warum 1 statt 2, buchinspiriert
-            model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+            model.add(Dense(1, activation='sigmoid'))
+            model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['binary_accuracy'])
 
         else:
             # Output Layer erhält 7 Nodes, für die 7 Label
-            model.add(Dense(7, activation='sigmoid'))
+            model.add(Dense(7, activation='softmax'))
 
             # compile network
             # model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
@@ -354,10 +358,11 @@ class Corpus:
 
         # load all documents
         train_docs, ytrain = self.load_clean_dataset(vocab, True)
-        test_docs, ytest = self.load_clean_dataset(vocab, False)
+        # test_docs, ytest = self.load_clean_dataset(vocab, False)
 
-        ytrain = to_categorical(ytrain)
-        # ytest = to_categorical(ytest)
+        if not self.binary_mode:
+            ytrain = to_categorical(ytrain)
+            # ytest = to_categorical(ytest)
 
         # create the tokenizer
         tokenizer = Corpus.create_tokenizer(train_docs)
