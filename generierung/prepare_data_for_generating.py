@@ -151,6 +151,7 @@ if __name__ == "__main__":
     if not os.path.exists(dirName):
         os.mkdir(dirName)
     for language in languages:
+        language = language.lower()
         animalseq = load_tales("clean/" + language + '_'+ 'animaltales_clean.txt', language, "animaltales")
         magicseq = load_tales("clean/" + language + '_'+'magictales_clean.txt', language, "magictales")
         religiousseq = load_tales("clean/" + language + '_'+'religioustales_clean.txt', language, "religioustales")
