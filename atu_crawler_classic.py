@@ -114,5 +114,5 @@ if __name__ == '__main__':
         corpora[language] = get_corpus(link, language)
         #print('Matching Errors: '+str(num_matching_errors))
 
-    with open('corpora.txt', 'w+', encoding='utf-8') as outfile:
+    with open('corpora.dict', 'w+', encoding='utf-8') as outfile:
         outfile.write(str(corpora))
