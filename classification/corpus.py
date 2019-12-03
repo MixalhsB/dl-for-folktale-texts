@@ -1,17 +1,22 @@
 # OLD NAME: corpus
 
 import ast
-import string
-import unicodedata
 import numpy as np
 import random
 import keras
+import os
+import string
+import unicodedata
+import pyLDAvis
+import pyLDAvis.gensim
 
 from collections import defaultdict
 from nltk.corpus import stopwords
-from nltk.tokenize import word_tokenize
+from nltk import word_tokenize
 from bs4 import BeautifulSoup
-from keras.preprocessing.text import text_to_word_sequence, Tokenizer
+from gensim import models
+from gensim import corpora
+from keras.preprocessing.text import Tokenizer
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, Activation
 from keras.utils import to_categorical
@@ -23,11 +28,12 @@ from keras.layers.convolutional import Conv1D, MaxPooling1D
 
 class Corpus:
 
-    def __init__(self, filename, language, test_split=0.2, seed=123, exclude_stop_words=False, binary_mode=False):
+    def __init__(self, filename, language, test_split=0.2, seed=None, exclude_stop_words=True, binary_mode=False):
         self.binary_mode = binary_mode
 
         if exclude_stop_words:
-            self.stop_words = stopwords.words(language)
+            self.stop_words = stopwords.words(language) + (['thee', 'thy', 'thou', 'ye'] if language == 'English'
+                                                           else [])
         else:
             self.stop_words = []
 
@@ -55,7 +61,7 @@ class Corpus:
         self.stories = [st for st in ast.literal_eval(dict_syntaxed_string)[language] if _get_number(st[2]) != -1]
         if seed is not None:
             random.seed(seed)
-            random.shuffle(self.stories)
+        random.shuffle(self.stories)
 
         def _get_atu_range(class_name):
             if class_name == 'animal':
@@ -135,11 +141,9 @@ class Corpus:
     #######################################
 
     def tokenize(self, text):
+        '''
         tokens = []
         text += '\n'
-
-        def _is_delimiter(c):
-            return not c.isalpha() and not c.isdigit()
 
         current = ''
         for size, char in enumerate(text):
@@ -150,6 +154,19 @@ class Corpus:
                 current = ''
             else:
                 current += char
+        '''
+
+        def _is_acceptable_token(possible_token):
+            for c in possible_token:
+                delimiter_chars = string.punctuation + string.whitespace
+                if not (c in delimiter_chars or unicodedata.category(c)[0] in 'ZP'):
+                    return True
+            return False
+
+        tokens = word_tokenize(text)
+        tokens = [tkn.lower() for tkn in tokens]
+        tokens = [tkn for tkn in tokens if _is_acceptable_token(tkn)]
+        tokens = [tkn for tkn in tokens if all(part_token not in self.stop_words for part_token in tkn.split("'"))]
         return tokens
 
     def extract_word_sequence(self, story):
@@ -308,6 +325,7 @@ class Corpus:
         return tokenizer
 
     # integer encode and pad documents
+    @staticmethod
     def encode_docs(tokenizer, max_length, docs):
         # integer encode
         encoded = tokenizer.texts_to_sequences(docs)
@@ -402,3 +420,55 @@ class Corpus:
         if self.book_model_data == (None, None, None, None, None):
             self.book_model_data = self.create_trained_model_data()
         return self.book_model_data
+
+    #######################################
+    #         LDA TOPIC MODELLING         #
+    #######################################
+
+    def run_lda(self):
+        while True:
+            user_input = input('-> Choose number of topics (e.g. 7): ')
+            if user_input.isdigit():
+                num_topics = int(user_input)
+                if num_topics < 2:
+                    print('-> Number of topics must be at least 2.')
+                    continue
+                break
+            else:
+                print('-> Please enter a valid number.')
+
+        list_of_list_of_tokens = []
+        for story in self.stories:
+            raw_text = BeautifulSoup(story[4], "html.parser").text
+            word_sequence = self.tokenize(raw_text)
+            list_of_list_of_tokens.append(word_sequence)
+
+        dictionary_LDA = corpora.Dictionary(list_of_list_of_tokens)
+        dictionary_LDA.filter_extremes(no_below=3)
+
+        sample = [dictionary_LDA.doc2bow(list_of_tokens) for list_of_tokens in list_of_list_of_tokens]
+
+        lda_model = models.LdaModel(sample, num_topics=num_topics, id2word=dictionary_LDA, random_state=1,
+                                    passes=4, alpha='auto', eta='auto')
+
+        vis = pyLDAvis.gensim.prepare(topic_model=lda_model, corpus=sample, dictionary=dictionary_LDA,
+                                      sort_topics=False)
+        if not os.path.isdir('./temporary'):
+            os.mkdir('./temporary')
+        pyLDAvis.save_html(vis, './temporary/lda.html')
+
+        predominant_topics_dict = {}
+        for i in range(len(self.stories)):
+            predominant_topic = max(lda_model[sample[i]], key=lambda x: x[1])[0] + 1
+            try:
+                predominant_topics_dict[predominant_topic].append(self.stories[i])
+            except KeyError:
+                predominant_topics_dict[predominant_topic] = [self.stories[i]]
+
+        print()
+        for i, topic in lda_model.show_topics(formatted=True, num_topics=num_topics, num_words=5):
+            print(str(i + 1) + ": " + topic)
+            print('This is the predominant topic of the following', len(predominant_topics_dict[i + 1]),
+                  'documents:' if len(predominant_topics_dict[i + 1]) != 1 else 'document:')
+            print([story[2] for story in predominant_topics_dict[i + 1]])
+            print()
