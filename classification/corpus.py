@@ -482,3 +482,151 @@ class Corpus:
                     max_freq = store_frequencies[class_name]
                     max_arg = class_name
             print(max_arg.upper(), 'is the most common tale category in this cluster.\n')
+
+    #######################################
+    #        N-GRAM CLASSIFICATION        #
+    #######################################
+
+    def load_train_stories(self):
+        # return list of stories, list of class numbers
+        train_lines = []
+        train_labels =[]
+        test_lines = []
+        test_labels =[]
+        for class_name in self.gold_classes:
+                for story in self.gold_classes[class_name]:
+                    if story in self.train_stories:
+                        train_lines.append(story)
+
+                        if self.binary_mode:
+                            if class_name == 'magic':
+                                train_labels.append(1)
+                            else:
+                                train_labels.append(0)
+
+                        else:
+                            if class_name == 'animal':
+                                train_labels.append(0)
+                            elif class_name == 'magic':
+                                train_labels.append(1)
+                            elif class_name == 'religious':
+                                train_labels.append(2)
+                            elif class_name == 'realistic':
+                                train_labels.append(3)
+                            elif class_name == 'ogre':
+                                train_labels.append(4)
+                            elif class_name == 'jokes':
+                                train_labels.append(5)
+                            elif class_name == 'formula':
+                                train_labels.append(6)
+                            # elif class_name == 'UNKNOWN':
+                            #     train_labels.append(7)
+                    
+                    else:
+                        test_lines.append(story)
+
+                        if self.binary_mode:
+                            if class_name == 'magic':
+                                test_labels.append(1)
+                            else:
+                                test_labels.append(0)
+
+                        else:
+                            if class_name == 'animal':
+                                test_labels.append(0)
+                            elif class_name == 'magic':
+                                test_labels.append(1)
+                            elif class_name == 'religious':
+                                test_labels.append(2)
+                            elif class_name == 'realistic':
+                                test_labels.append(3)
+                            elif class_name == 'ogre':
+                                test_labels.append(4)
+                            elif class_name == 'jokes':
+                                test_labels.append(5)
+                            elif class_name == 'formula':
+                                test_labels.append(6)
+                            # elif class_name == 'UNKNOWN':
+                            #     test_labels.append(7)
+
+        return train_lines, train_labels, test_lines, test_labels
+
+    # fit a tokenizer
+    # def self.create_tokenizer(self, lines):
+    #     tokenizer = Tokenizer()
+    #     tokenizer.fit_on_texts(lines)
+    #     return tokenizer
+
+    # calculate the maximum document length
+    def max_length(self, lines):
+        return max([len(s.split()) for s in lines])
+
+    # encode a list of lines
+    def encode_text(self, tokenizer, lines, length):
+        # integer encode
+        encoded = tokenizer.texts_to_sequences(lines)
+        # pad encoded sequences
+        padded = pad_sequences(encoded, maxlen=length, padding='post')
+        return padded
+
+    # define the model
+    def define_model_n_gram(self, length, vocab_size):
+        # channel 1
+        inputs1 = Input(shape=(length,))
+        embedding1 = Embedding(vocab_size, 100)(inputs1)
+        conv1 = Conv1D(filters=32, kernel_size=4, activation='relu')(embedding1)
+        drop1 = Dropout(0.5)(conv1)
+        pool1 = MaxPooling1D(pool_size=2)(drop1)
+        flat1 = Flatten()(pool1)
+        # channel 2
+        inputs2 = Input(shape=(length,))
+        embedding2 = Embedding(vocab_size, 100)(inputs2)
+        conv2 = Conv1D(filters=32, kernel_size=6, activation='relu')(embedding2)
+        drop2 = Dropout(0.5)(conv2)
+        pool2 = MaxPooling1D(pool_size=2)(drop2)
+        flat2 = Flatten()(pool2)
+        # channel 3
+        inputs3 = Input(shape=(length,))
+        embedding3 = Embedding(vocab_size, 100)(inputs3)
+        conv3 = Conv1D(filters=32, kernel_size=8, activation='relu')(embedding3)
+        drop3 = Dropout(0.5)(conv3)
+        pool3 = MaxPooling1D(pool_size=2)(drop3)
+        flat3 = Flatten()(pool3)
+        # merge
+        merged = concatenate([flat1, flat2, flat3])
+        # interpretation
+        dense1 = Dense(10, activation='relu')(merged)
+        outputs = Dense(1, activation='sigmoid')(dense1)
+        model = Model(inputs=[inputs1, inputs2, inputs3], outputs=outputs)
+        # compile
+        model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+        # summarize
+        model.summary()
+        # plot_model(model, show_shapes=True, to_file='model.png')
+        return model
+
+    def ngram_train(self):
+        # load training dataset
+        trainLines, trainLabels, testLines, testLabels = self.load_train_stories()
+        # create tokenizer
+        tokenizer = self.create_tokenizer(trainLines)
+        # calculate max document length
+        length = self.max_length(trainLines)
+        # print('Max document length: %d' % length)
+        # calculate vocabulary size
+        vocab_size = len(tokenizer.word_index) + 1
+        # print('Vocabulary size: %d' % vocab_size)
+        # encode data
+        trainX = self.encode_text(tokenizer, trainLines, length)
+        # define model
+        model = self.define_model_n_gram(length, vocab_size)
+        # fit model
+        trainX = np.asarray(trainX)
+        trainLabels = np.asarray(trainLabels)
+        model.fit([trainX,trainX,trainX], trainLabels, epochs=7, batch_size=16)
+        # save the model
+        # model.save('model.h5')
+        return model, trainLines, trainLabels, testLines, testLabels, tokenizer, length, vocab_size, trainX
+    
+    def ngram_test(self, tokenizer, testLines, length):
+        return self.encode_text(tokenizer, testLines, length)
