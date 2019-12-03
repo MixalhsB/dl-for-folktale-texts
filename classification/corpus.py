@@ -28,7 +28,7 @@ from keras.layers.convolutional import Conv1D, MaxPooling1D
 
 class Corpus:
 
-    def __init__(self, filename, language, test_split=0.2, seed=None, exclude_stop_words=True, binary_mode=False):
+    def __init__(self, filename, language, test_split=0.2, seed=None, exclude_stop_words=False, binary_mode=False):
         self.binary_mode = binary_mode
 
         if exclude_stop_words:
@@ -461,14 +461,24 @@ class Corpus:
         for i in range(len(self.stories)):
             predominant_topic = max(lda_model[sample[i]], key=lambda x: x[1])[0] + 1
             try:
-                predominant_topics_dict[predominant_topic].append(self.stories[i])
+                predominant_topics_dict[predominant_topic].append(i)
             except KeyError:
-                predominant_topics_dict[predominant_topic] = [self.stories[i]]
+                predominant_topics_dict[predominant_topic] = [i]
 
         print()
         for i, topic in lda_model.show_topics(formatted=True, num_topics=num_topics, num_words=5):
             print(str(i + 1) + ": " + topic)
-            print('This is the predominant topic of the following', len(predominant_topics_dict[i + 1]),
-                  'documents:' if len(predominant_topics_dict[i + 1]) != 1 else 'document:')
-            print([story[2] for story in predominant_topics_dict[i + 1]])
-            print()
+            print('This is the predominant topic of', len(predominant_topics_dict[i + 1]),
+                  'documents.' if len(predominant_topics_dict[i + 1]) != 1 else 'document.')
+            store_frequencies = defaultdict(int)
+            for story_corpus_index in predominant_topics_dict[i + 1]:
+                story = self.stories[story_corpus_index]
+                gold = self.get_gold_class_name(story)
+                store_frequencies[gold] += 1
+            max_freq = -1
+            max_arg = None
+            for class_name in store_frequencies:
+                if store_frequencies[class_name] > max_freq:
+                    max_freq = store_frequencies[class_name]
+                    max_arg = class_name
+            print(max_arg.upper(), 'is the most common tale category in this cluster.\n')
