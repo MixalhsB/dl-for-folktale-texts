@@ -132,15 +132,15 @@ lines_title = doc_title.split('\n')
 #input of the model has to be as long as seq_length
 # seq_length = average_sentence_length("German", kind)
 seq_length = len(lines[0].split()) - 1 # wieso wurde diese zeile gelöscht und zum spezielleren Fall abgeändert? (Zeile 131)
-seq_length_title = len(lines_title[0].split()) - 1
+seq_length_title = 5 #len(lines_title[0].split()) - 1 model trained on set sequence length 5
 
 
 # load the models
 model = load_model("models/"+language+"_"+kind+'_model.h5')
-title_model = load_model("models/"+language+"_"+kind+'_model_title.h5')
+title_model = load_model("models/"+'German_title_model.h5')
 # load the tokenizers
 tokenizer = load(open("tokenizer/"+language+"_"+kind+"_tokenizer.pkl", 'rb'))
-title_tokenizer = load(open("tokenizer/"+language+"_"+kind+"_tokenizer_title.pkl", 'rb'))
+title_tokenizer = load(open("tokenizer/German_title_tokenizer.pkl", 'rb'))
 
 # select a seed text: random line of text from the input text
 # maybe the first line?
@@ -172,14 +172,13 @@ def min_max_random(language, type):
     with open("../min_max_tale_length.txt", encoding = "utf8") as file:
         s = file.read()
         dictionary = eval(s.replace("inf", "0"))
-        #TODO language.upper
         min = dictionary[type][language][0]
         max = dictionary[type][language][1]
         return random.randrange(min, max)
 
 generated = Generate(title_model, title_tokenizer, seq_length_title , seed_text_title, 5)
 print(generated.generate_seq())
-generated = Generate(model, tokenizer, seq_length, seed_text, avg_tale_length("German", kind, min_max_random("German", kind)))
+generated = Generate(model, tokenizer, seq_length, seed_text, avg_tale_length(language, kind, min_max_random(language, kind)))
 # generated = generate_seq(model, tokenizer, seq_length, seed_text, min_max_random(language, kind))
 print(generated.generate_seq())
 

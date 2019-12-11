@@ -124,8 +124,10 @@ if __name__ == "__main__":
 	# corpora = read_corpus('corpora.txt')
 	# corpora_no_atu = read_corpus('corpora_no_atu')
 	corpora_default = read_corpus('corpora.txt')
-	for language in corpora_default:
-		number_of_tales = len(corpora_default[language])
+	for corpus_language in corpora_default:
+		language = corpus_language.lower()
+		number_of_tales = len(corpora_default[corpus_language])
+
 		animallen = 0
 		magiclen = 0
 		religiouslen = 0
@@ -140,7 +142,7 @@ if __name__ == "__main__":
 		min_max_stupidogrelen = [math.inf, 0]
 		min_max_jokeslen = [math.inf, 0]
 		min_max_formulalen = [math.inf, 0]
-		for story in corpora_default[language]:
+		for story in corpora_default[corpus_language]:
 			story = Story(story[0],story[1],story[2],story[3],story[4])
 			
 			if story.atu_type == 'UNKNOWN':

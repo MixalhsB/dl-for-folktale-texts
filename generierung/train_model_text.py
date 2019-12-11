@@ -65,6 +65,7 @@ def trainmodel(in_filename):
     tokenizer.fit_on_texts(lines)
     #train it on the data -> it finds all unique words and assigns each an integer
     sequences = tokenizer.texts_to_sequences(lines)
+    print(sequences)
     #make a list of integer out of each list of words
 
 
@@ -84,7 +85,7 @@ def trainmodel(in_filename):
     # print(len(sequences))
     # print([len(i) for i in sequences])
     sequences = array(sequences)
-    # print(sequences.shape)
+    print(sequences.shape)
     # print("sequences: ", sequences)
     # print(sequences[:,:-1])
     # print(sequences[:,-1])
@@ -103,7 +104,7 @@ def trainmodel(in_filename):
     model_name = in_filename.split("/")[-1]
     model_name = model_name[:-4]  # txt Endung
     model_name = model_name.replace("sequences", "model")
-    model.save('models/model_name+ '.h5')
+    model.save('models/model_name'+ '.h5')
     # save the tokenizer
     #we need the mapping from words to integers when we load the model
     #we can save it with Pickle
@@ -111,7 +112,7 @@ def trainmodel(in_filename):
     model_name = model_name.replace("model", "tokenizer")
     dump(tokenizer, open('tokenizer/' + model_name + '.pkl', 'wb'))
 
-language = 'german'
+language = 'German'
 
 trainmodel("sequence/" + language + '_' +'realistictales_sequences.txt')
 # trainmodel("sequence/" + language + '_'+'magictales_sequences.txt') # MemoryError

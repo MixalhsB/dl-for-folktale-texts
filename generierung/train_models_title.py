@@ -2,7 +2,9 @@
 
 from numpy import array
 from pickle import dump
+from collections import defaultdict
 from keras.preprocessing.text import Tokenizer
+from keras.preprocessing.sequence import pad_sequences
 from keras.utils.vis_utils import plot_model
 from keras.utils import to_categorical
 from keras.models import Sequential
@@ -44,24 +46,20 @@ def define_model(vocab_size, seq_length):
     #plot_model(model, to_file='model.png', show_shapes=True)
     return model
 
-def trainmodel(in_filename):
-
-    # load
-    #in_filename = 'republic_sequences.txt'
-    doc = load_doc(in_filename)
+def trainmodel(doc, model_name):
     lines = doc.split("\n")
-    # line = doc.split('\n\n')
-    # lines = []
-    # for item in line:
-    #    lines += line.split("\n")
+
+    # removes empty lines
+    lines = list(filter(None, lines))
 
     # integer encode sequences of words
     tokenizer = Tokenizer() #create Tokenizer for encoding
     tokenizer.fit_on_texts(lines)
     #train it on the data -> it finds all unique words and assigns each an integer
     sequences = tokenizer.texts_to_sequences(lines)
+    # pad sequences to the same length
+    sequences = pad_sequences(sequences, padding="post")
     #make a list of integer out of each list of words
-
 
     # vocabulary size
     vocab_size = len(tokenizer.word_index) + 1
@@ -71,7 +69,7 @@ def trainmodel(in_filename):
 
     # separate into input and output
     sequences = array(sequences)
-    # print(sequences.shape)
+    print(sequences.shape)
     # print("sequences: ", sequences)
     # print(sequences[:, :-1])
     # print(sequences[:, -1])
@@ -86,9 +84,9 @@ def trainmodel(in_filename):
     # fit model
     model.fit(X, y, batch_size=128, epochs=100)
     # save the model to file
-    model_name = in_filename.split("/")[-1]
-    model_name = model_name[:-4] # txt Endung
-    model_name = model_name.replace("sequences", "model")
+    # model_name = in_filename.split("/")[-1]
+    # model_name = model_name[:-4] # txt Endung
+    # model_name = model_name.replace("sequences", "model")
     # print(model_name)
     model.save('models/' + model_name + '.h5')
     # save the tokenizer
@@ -97,16 +95,28 @@ def trainmodel(in_filename):
     model_name = model_name.replace("model", "tokenizer")
     dump(tokenizer, open('tokenizer/' + model_name + '.pkl', 'wb'))
 
-language = 'german'
+language = 'Spanish'
+
+categories = ["animaltales", "magictales", "religioustales", "realistictales", "stupidogre", "jokes", "formulatales"]
+titles = defaultdict(str)
+for item in categories:
+    titles[language] += load_doc("sequence/" + language + "_" + item + "_sequences_title.txt") + '\n'
+    # print(item)
+    # print()
+    # print(titles[language])
+
+# print(titles[language])
+model_name = language + '_title_model'
+trainmodel(titles[language], model_name)
 
 # trainmodel("sequence/" + language + '_' +'animaltales_sequences.txt')
 # trainmodel("sequence/" + language + '_'+'magictales_sequences.txt') # MemoryError
 ##
 # trainmodel("sequence/" + language + '_'+'religioustales_sequences_title.txt')
 ##
-trainmodel("sequence/" + language + '_'+'realistictales_sequences_title.txt')
+# trainmodel("sequence/" + language + '_'+'realistictales_sequences_title.txt')
 ##trainmodel("sequence/" + language + '_'+'stupidogre_sequences.txt')
 ##
 ##trainmodel("sequence/" + language + '_'+'jokes_sequences.txt')
 ##
-##trainmodel("sequence/" + language + '_'+'formulatales_sequences.txt')
+##trainmodel("sequence/" + language + '_'+'formulatales_sequencDanishes.txt')
