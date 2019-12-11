@@ -496,7 +496,7 @@ class Corpus:
         for class_name in self.gold_classes:
                 for story in self.gold_classes[class_name]:
                     if story in self.train_stories:
-                        train_lines.append(story)
+                        train_lines.append(story[4])
 
                         if self.binary_mode:
                             if class_name == 'magic':
@@ -523,7 +523,7 @@ class Corpus:
                             #     train_labels.append(7)
                     
                     else:
-                        test_lines.append(story)
+                        test_lines.append(story[4])
 
                         if self.binary_mode:
                             if class_name == 'magic':
@@ -628,5 +628,15 @@ class Corpus:
         # model.save('model.h5')
         return model, trainLines, trainLabels, testLines, testLabels, tokenizer, length, vocab_size, trainX
     
-    def ngram_test(self, tokenizer, testLines, length):
-        return self.encode_text(tokenizer, testLines, length)
+    #def ngram_test(self, tokenizer, testLines, length):
+    #    return self.encode_text(tokenizer, testLines, length)
+    #
+    #def testit(self, model, trainLines, trainLabels, testLines, testLabels, tokenizer, length, vocab_size, trainX):
+    #    _, acc = model.evaluate([trainX,trainX,trainX], trainLabels, verbose=0)
+    #    print('Train Accuracy: %.2f' % (acc*100))
+    #    # evaluate model on test dataset dataset
+    #    testX = self.encode_text(tokenizer, testLines, length)
+    #    testX = np.asarray(testX)
+    #    testLabels = np.asarray(testLabels)
+    #    _, acc = model.evaluate([testX,testX,testX], testLabels, verbose=0)
+    #    print('Test Accuracy: %.2f' % (acc*100))
