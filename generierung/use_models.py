@@ -144,8 +144,8 @@ title_tokenizer = load(open("tokenizer/German_title_tokenizer.pkl", 'rb'))
 
 # select a seed text: random line of text from the input text
 # maybe the first line?
-seed_text_title = lines_title[randint(0, len(lines_title))]
-print(seed_text_title + '\n')
+# seed_text_title = lines_title[randint(0, len(lines_title))]
+# print(seed_text_title + '\n')
 
 seed_text = lines[randint(0, len(lines))]
 print(seed_text + '\n')
@@ -176,7 +176,8 @@ def min_max_random(language, type):
         max = dictionary[type][language][1]
         return random.randrange(min, max)
 
-generated = Generate(title_model, title_tokenizer, seq_length_title , seed_text_title, 5)
+# generated = Generate(title_model, title_tokenizer, seq_length_title , seed_text_title, 5)
+generated = Generate(title_model, title_tokenizer, seq_length_title , seed_text, 5)
 print(generated.generate_seq())
 generated = Generate(model, tokenizer, seq_length, seed_text, avg_tale_length(language, kind, min_max_random(language, kind)))
 # generated = generate_seq(model, tokenizer, seq_length, seed_text, min_max_random(language, kind))
