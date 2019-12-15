@@ -7,10 +7,13 @@ import keras
 import os
 import string
 import unicodedata
+import multiprocessing
 import pyLDAvis
 import pyLDAvis.gensim
 
 from collections import defaultdict
+
+from keras import Model
 from nltk.corpus import stopwords
 from nltk import word_tokenize
 from bs4 import BeautifulSoup
@@ -18,12 +21,15 @@ from gensim import models
 from gensim import corpora
 from keras.preprocessing.text import Tokenizer
 from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation
+from keras.layers import Dense, Dropout, Activation, Input, concatenate
 from keras.utils import to_categorical
 from keras.preprocessing.sequence import pad_sequences
 from keras.layers import Embedding
 from keras.layers import Flatten
 from keras.layers.convolutional import Conv1D, MaxPooling1D
+from gensim.models.doc2vec import Doc2Vec, TaggedDocument
+from sklearn.linear_model import LogisticRegression
+from tqdm import tqdm
 
 
 class Corpus:
@@ -90,11 +96,8 @@ class Corpus:
                     return 1 <= _get_number(atu_string) < magic_minimum \
                            or magic_maximum < _get_number(atu_string) <= 2399
             else:
-                try:
-                    minimum, maximum = _get_atu_range(class_name)
-                    return minimum <= _get_number(atu_string) <= maximum
-                except AssertionError:
-                    return True
+                minimum, maximum = _get_atu_range(class_name)
+                return minimum <= _get_number(atu_string) <= maximum
 
         def _get_stories_of_class(class_name):
             return [story for story in self.stories if _is_atu_in_range(story[2], class_name)]
@@ -103,6 +106,7 @@ class Corpus:
 
         self.gold_classes = {class_name: stories for class_name, stories in
                              zip(self.class_names, iter_over_class_specific_subsets)}
+        self.on_demand_story_ids_to_class_names = {}
 
         self.w2i_dict = self.get_word_to_index_dict()
 
@@ -110,8 +114,10 @@ class Corpus:
         self.test_stories = self.stories[:x_y_test_length]
         self.train_stories = self.stories[x_y_test_length:]
 
+        self.avg_story_lengths = None
         self.simple_reuters_model = None
         self.book_model_data = (None, None, None, None, None)
+        self.doc2vec_model_data = (None, None, None)
         self.ngram_model_data = (None, None, None)
 
     def __iter__(self):
@@ -124,38 +130,26 @@ class Corpus:
     def get_avg_story_lengths(self):
         # Gibt ein Dictionary mit den Klassennamen
         # und deren durchschnittlicher Märchenlänge zurück
-        story_lengths = defaultdict(list)
-        for story in self.stories:
-            length = len(self.extract_word_sequence(story))
-            gold = self.get_gold_class_name(story)
-            if gold in story_lengths:
-                story_lengths[gold][0] += length
-                story_lengths[gold][1] += 1
-            else:
-                story_lengths[gold] = [length, 1]
-        result = {class_name: story_lengths[class_name][0] / story_lengths[class_name][1]
-                  for class_name in story_lengths}
-        return result
+        if self.avg_story_lengths == None:
+            story_lengths = defaultdict(list)
+            for story in self.stories:
+                length = len(self.extract_word_sequence(story))
+                gold = self.get_gold_class_name(story)
+                if gold in story_lengths:
+                    story_lengths[gold][0] += length
+                    story_lengths[gold][1] += 1
+                else:
+                    story_lengths[gold] = [length, 1]
+            result = {class_name: story_lengths[class_name][0] / story_lengths[class_name][1]
+                      for class_name in story_lengths}
+            self.avg_story_lengths = result
+        return self.avg_story_lengths
 
     #######################################
     #    SIMPLE REUTERS CLASSIFICATION    #
     #######################################
 
     def tokenize(self, text):
-        '''
-        tokens = []
-        text += '\n'
-
-        current = ''
-        for size, char in enumerate(text):
-            if _is_delimiter(char):
-                if len(current) > 0:
-                    if current.lower() not in self.stop_words:
-                        tokens.append(current.lower())
-                current = ''
-            else:
-                current += char
-        '''
 
         def _is_acceptable_token(possible_token):
             for c in possible_token:
@@ -204,14 +198,15 @@ class Corpus:
         return [self.w2i_dict[word] for word in word_sequence]
 
     def get_gold_class_name(self, story):
-        # TODO: why so complicated?
         this_story_id = story[1]
-        for class_name in self.class_names:
-            for any_story in self.gold_classes[class_name]:
-                other_story_id = any_story[1]
-                if this_story_id == other_story_id:
-                    return class_name
-        return 'UNKNOWN'
+        if this_story_id not in self.on_demand_story_ids_to_class_names:
+            for class_name in self.class_names:
+                for any_story in self.gold_classes[class_name]:
+                    other_story_id = any_story[1]
+                    if this_story_id == other_story_id:
+                        return class_name
+            self.on_demand_story_ids_to_class_names[this_story_id] = class_name
+        return self.on_demand_story_ids_to_class_names[this_story_id]
 
     def get_train_and_test_data(self):
         x_test = np.array([self.get_index_list_representation(story) for story in self.test_stories])
@@ -231,8 +226,8 @@ class Corpus:
             bin_y_train = y_train
             bin_y_test = y_test
         else:
-            bin_y_train = keras.utils.to_categorical(y_train, len(self.class_names))
-            bin_y_test = keras.utils.to_categorical(y_test, len(self.class_names))
+            bin_y_train = to_categorical(y_train, len(self.class_names))
+            bin_y_test = to_categorical(y_test, len(self.class_names))
         return (bin_x_train, bin_y_train), (bin_x_test, bin_y_test)
 
     def get_trained_model_for_simple_reuters_classifier(self):
@@ -246,7 +241,6 @@ class Corpus:
             model.add(Dense(1 if self.binary_mode else len(self.class_names)))
             model.add(Activation('sigmoid' if self.binary_mode else 'softmax'))
 
-            # TODO: how meaningful is this?
             if self.binary_mode:
                 model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['binary_accuracy'])
             else:
@@ -388,11 +382,11 @@ class Corpus:
 
         # define vocabulary size
         vocab_size = len(tokenizer.word_index) + 1
-        print('Vocabulary size: %d' % vocab_size)
+        # print('Vocabulary size: %d' % vocab_size)
 
         # calculate the maximum sequence length
         max_length = max([len(s.split()) for s in train_docs])
-        print('Maximum length: %d' % max_length)
+        # print('Maximum length: %d' % max_length)
 
         # encode data
         Xtrain = Corpus.encode_docs(tokenizer, max_length, train_docs)
@@ -421,6 +415,53 @@ class Corpus:
         if self.book_model_data == (None, None, None, None, None):
             self.book_model_data = self.create_trained_model_data()
         return self.book_model_data
+
+    #######################################
+    #    DOC2VEC-BASED CLASSIFICATION     #
+    #######################################
+
+    def create_trained_model_data_for_doc2vec_classifier(self):
+        vector_size_input = 175  # int(input("Enter vector size between 100 and 300: "))
+        window_size_input = 5  # int(input("Enter a window size (maximum number of context words) between 1 and 10: "))
+
+        tags_index = {class_name: i for i, class_name in enumerate(self.class_names)}
+
+        tagged_train_stories = [TaggedDocument(self.tokenize(BeautifulSoup(story[4], "html.parser").text),
+                                               tags=[tags_index[self.get_gold_class_name(story)]])
+                                for story in self.train_stories]
+        tagged_test_stories = [TaggedDocument(self.tokenize(BeautifulSoup(story[4], "html.parser").text),
+                                              tags=[tags_index[self.get_gold_class_name(story)]])
+                               for story in self.test_stories]
+
+        # Feature Vector
+        cores = multiprocessing.cpu_count()
+
+        model_dbow = Doc2Vec(dm=1, window_size=window_size_input, vector_size=vector_size_input, negative=5, hs=0,
+                             min_count=2, sample=0, workers=cores, alpha=0.025, min_alpha=0.001)
+        model_dbow.build_vocab([x for x in tqdm(tagged_train_stories)])
+
+        model_dbow.train(tagged_train_stories, total_examples=len(tagged_train_stories), epochs=30)
+
+        def vector_for_learning(model, tagged_stories):
+            targets, feature_vectors = zip(*[(ts.tags[0], model.infer_vector(ts.words, steps=20))
+                                             for ts in tagged_stories])
+            return targets, feature_vectors
+
+        # model_dbow.save('./' + language + '.d2v')
+
+        y_train, X_train = vector_for_learning(model_dbow, tagged_train_stories)
+
+        # y_test, X_test = vector_for_learning(model_dbow, tagged_test_stories)
+
+        logreg = LogisticRegression(n_jobs=1, C=1e5)
+        logreg.fit(X_train, y_train)
+
+        return model_dbow, logreg, vector_for_learning
+
+    def get_trained_model_data_for_doc2vec_classifier(self):
+        if self.doc2vec_model_data == (None, None, None):
+            self.doc2vec_model_data = self.create_trained_model_data_for_doc2vec_classifier()
+        return self.doc2vec_model_data
 
     #######################################
     #         LDA TOPIC MODELLING         #
@@ -491,66 +532,36 @@ class Corpus:
     def load_train_stories(self):
         # return list of stories, list of class numbers
         train_lines = []
-        train_labels =[]
-        #test_lines = []
-        #test_labels =[]
+        train_labels = []
+        # test_lines = []
+        # test_labels =[]
         for class_name in self.gold_classes:
-                for story in self.gold_classes[class_name]:
-                    if story in self.train_stories:
-                        train_lines.append(story[4])
+            for story in self.gold_classes[class_name]:
+                if story in self.train_stories:
+                    train_lines.append(story[4])
 
-                        if self.binary_mode:
-                            if class_name == 'magic':
-                                train_labels.append(1)
-                            else:
-                                train_labels.append(0)
-
+                    if self.binary_mode:
+                        if class_name == 'magic':
+                            train_labels.append(1)
                         else:
-                            if class_name == 'animal':
-                                train_labels.append(0)
-                            elif class_name == 'magic':
-                                train_labels.append(1)
-                            elif class_name == 'religious':
-                                train_labels.append(2)
-                            elif class_name == 'realistic':
-                                train_labels.append(3)
-                            elif class_name == 'ogre':
-                                train_labels.append(4)
-                            elif class_name == 'jokes':
-                                train_labels.append(5)
-                            elif class_name == 'formula':
-                                train_labels.append(6)
-                            # elif class_name == 'UNKNOWN':
-                            #     train_labels.append(7)
-                    
-                    #else:
-                    #    test_lines.append(story[4])
+                            train_labels.append(0)
 
-                    #    if self.binary_mode:
-                    #        if class_name == 'magic':
-                    #            test_labels.append(1)
-                    #        else:
-                    #            test_labels.append(0)
-
-                    #    else:
-                    #        if class_name == 'animal':
-                    #            test_labels.append(0)
-                    #        elif class_name == 'magic':
-                    #            test_labels.append(1)
-                    #        elif class_name == 'religious':
-                    #            test_labels.append(2)
-                    #        elif class_name == 'realistic':
-                    #            test_labels.append(3)
-                    #        elif class_name == 'ogre':
-                    #            test_labels.append(4)
-                    #        elif class_name == 'jokes':
-                    #            test_labels.append(5)
-                    #        elif class_name == 'formula':
-                    #            test_labels.append(6)
-                    #        # elif class_name == 'UNKNOWN':
-                    #        #     test_labels.append(7)
-
-        return train_lines, train_labels#, test_lines, test_labels
+                    else:
+                        if class_name == 'animal':
+                            train_labels.append(0)
+                        elif class_name == 'magic':
+                            train_labels.append(1)
+                        elif class_name == 'religious':
+                            train_labels.append(2)
+                        elif class_name == 'realistic':
+                            train_labels.append(3)
+                        elif class_name == 'ogre':
+                            train_labels.append(4)
+                        elif class_name == 'jokes':
+                            train_labels.append(5)
+                        elif class_name == 'formula':
+                            train_labels.append(6)
+        return train_lines, train_labels  # , test_lines, test_labels
 
     # fit a tokenizer
     # def self.create_tokenizer(self, lines):
@@ -597,18 +608,25 @@ class Corpus:
         merged = concatenate([flat1, flat2, flat3])
         # interpretation
         dense1 = Dense(10, activation='relu')(merged)
-        outputs = Dense(1, activation='sigmoid')(dense1)
+        if self.binary_mode:
+            outputs = Dense(1, activation='sigmoid')(dense1)
+        else:
+            outputs = Dense(7, activation='softmax')(dense1)
         model = Model(inputs=[inputs1, inputs2, inputs3], outputs=outputs)
+
         # compile
-        model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+        if self.binary_mode:
+            model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['binary_accuracy'])
+        else:
+            model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['categorical_accuracy'])
         # summarize
-        model.summary()
+        # model.summary()
         # plot_model(model, show_shapes=True, to_file='model.png')
         return model
 
     def ngram_train(self):
         # load training dataset
-        #trainLines, trainLabels, testLines, testLabels = self.load_train_stories()
+        # trainLines, trainLabels, testLines, testLabels = self.load_train_stories()
         trainLines, trainLabels = self.load_train_stories()
         # create tokenizer
         tokenizer = self.create_tokenizer(trainLines)
@@ -625,20 +643,22 @@ class Corpus:
         # fit model
         trainX = np.asarray(trainX)
         trainLabels = np.asarray(trainLabels)
-        model.fit([trainX,trainX,trainX], trainLabels, epochs=7, batch_size=16)
+        model.fit([trainX, trainX, trainX],
+                  trainLabels if self.binary_mode else to_categorical(trainLabels, len(self.class_names)),
+                  epochs=7, batch_size=16)
         # save the model
         # model.save('model.h5')
         return model, tokenizer, length
-    
+
     def get_ngram_model(self):
         if self.ngram_model_data == (None, None, None):
             self.ngram_model_data = self.ngram_train()
         return self.ngram_model_data
 
-    #def ngram_test(self, tokenizer, testLines, length):
+    # def ngram_test(self, tokenizer, testLines, length):
     #    return self.encode_text(tokenizer, testLines, length)
-    
-    #def testit1(self, model, trainLabels, testLines, testLabels, tokenizer, length, trainX):
+
+    # def testit1(self, model, trainLabels, testLines, testLabels, tokenizer, length, trainX):
     #    _, acc = model.evaluate([trainX,trainX,trainX], trainLabels, verbose=0)
     #    print('Train Accuracy: %.2f' % (acc*100))
     #    # evaluate model on test dataset dataset
@@ -648,7 +668,7 @@ class Corpus:
     #    _, acc = model.evaluate([testX,testX,testX], testLabels, verbose=0)
     #    print('Test Accuracy: %.2f' % (acc*100))
 
-    #def testit2(self, model, testLabels, tokenizer, length):
+    # def testit2(self, model, testLabels, tokenizer, length):
     #    testX = self.encode_text(tokenizer, testLines, length)
     #    testX = np.asarray(testX)
     #    #testLabels = np.asarray(testLabels)
