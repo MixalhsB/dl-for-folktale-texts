@@ -112,6 +112,7 @@ class Corpus:
 
         self.simple_reuters_model = None
         self.book_model_data = (None, None, None, None, None)
+        self.ngram_model_data = (None, None, None)
 
     def __iter__(self):
         return iter(self.stories)
@@ -491,8 +492,8 @@ class Corpus:
         # return list of stories, list of class numbers
         train_lines = []
         train_labels =[]
-        test_lines = []
-        test_labels =[]
+        #test_lines = []
+        #test_labels =[]
         for class_name in self.gold_classes:
                 for story in self.gold_classes[class_name]:
                     if story in self.train_stories:
@@ -522,34 +523,34 @@ class Corpus:
                             # elif class_name == 'UNKNOWN':
                             #     train_labels.append(7)
                     
-                    else:
-                        test_lines.append(story[4])
+                    #else:
+                    #    test_lines.append(story[4])
 
-                        if self.binary_mode:
-                            if class_name == 'magic':
-                                test_labels.append(1)
-                            else:
-                                test_labels.append(0)
+                    #    if self.binary_mode:
+                    #        if class_name == 'magic':
+                    #            test_labels.append(1)
+                    #        else:
+                    #            test_labels.append(0)
 
-                        else:
-                            if class_name == 'animal':
-                                test_labels.append(0)
-                            elif class_name == 'magic':
-                                test_labels.append(1)
-                            elif class_name == 'religious':
-                                test_labels.append(2)
-                            elif class_name == 'realistic':
-                                test_labels.append(3)
-                            elif class_name == 'ogre':
-                                test_labels.append(4)
-                            elif class_name == 'jokes':
-                                test_labels.append(5)
-                            elif class_name == 'formula':
-                                test_labels.append(6)
-                            # elif class_name == 'UNKNOWN':
-                            #     test_labels.append(7)
+                    #    else:
+                    #        if class_name == 'animal':
+                    #            test_labels.append(0)
+                    #        elif class_name == 'magic':
+                    #            test_labels.append(1)
+                    #        elif class_name == 'religious':
+                    #            test_labels.append(2)
+                    #        elif class_name == 'realistic':
+                    #            test_labels.append(3)
+                    #        elif class_name == 'ogre':
+                    #            test_labels.append(4)
+                    #        elif class_name == 'jokes':
+                    #            test_labels.append(5)
+                    #        elif class_name == 'formula':
+                    #            test_labels.append(6)
+                    #        # elif class_name == 'UNKNOWN':
+                    #        #     test_labels.append(7)
 
-        return train_lines, train_labels, test_lines, test_labels
+        return train_lines, train_labels#, test_lines, test_labels
 
     # fit a tokenizer
     # def self.create_tokenizer(self, lines):
@@ -607,7 +608,8 @@ class Corpus:
 
     def ngram_train(self):
         # load training dataset
-        trainLines, trainLabels, testLines, testLabels = self.load_train_stories()
+        #trainLines, trainLabels, testLines, testLabels = self.load_train_stories()
+        trainLines, trainLabels = self.load_train_stories()
         # create tokenizer
         tokenizer = self.create_tokenizer(trainLines)
         # calculate max document length
@@ -626,17 +628,29 @@ class Corpus:
         model.fit([trainX,trainX,trainX], trainLabels, epochs=7, batch_size=16)
         # save the model
         # model.save('model.h5')
-        return model, trainLines, trainLabels, testLines, testLabels, tokenizer, length, vocab_size, trainX
+        return model, tokenizer, length
     
+    def get_ngram_model(self):
+        if self.ngram_model_data == (None, None, None):
+            self.ngram_model_data = self.ngram_train()
+        return self.ngram_model_data
+
     #def ngram_test(self, tokenizer, testLines, length):
     #    return self.encode_text(tokenizer, testLines, length)
-    #
-    #def testit(self, model, trainLines, trainLabels, testLines, testLabels, tokenizer, length, vocab_size, trainX):
+    
+    #def testit1(self, model, trainLabels, testLines, testLabels, tokenizer, length, trainX):
     #    _, acc = model.evaluate([trainX,trainX,trainX], trainLabels, verbose=0)
     #    print('Train Accuracy: %.2f' % (acc*100))
     #    # evaluate model on test dataset dataset
     #    testX = self.encode_text(tokenizer, testLines, length)
     #    testX = np.asarray(testX)
     #    testLabels = np.asarray(testLabels)
+    #    _, acc = model.evaluate([testX,testX,testX], testLabels, verbose=0)
+    #    print('Test Accuracy: %.2f' % (acc*100))
+
+    #def testit2(self, model, testLabels, tokenizer, length):
+    #    testX = self.encode_text(tokenizer, testLines, length)
+    #    testX = np.asarray(testX)
+    #    #testLabels = np.asarray(testLabels)
     #    _, acc = model.evaluate([testX,testX,testX], testLabels, verbose=0)
     #    print('Test Accuracy: %.2f' % (acc*100))

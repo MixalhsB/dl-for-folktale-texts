@@ -49,3 +49,14 @@ class Classifier:
         comparison = [(abs(lengths[cn] - this_length), cn) for cn in lengths]
         comparison.sort()
         return comparison[0][1]
+    
+    def ngram_classify(self, html_text):
+        model, tokenizer, length = self.corpus.get_ngram_model()
+        raw_text = BeautifulSoup(html_text, "html.parser").text
+        word_sequence = self.corpus.tokenize(raw_text)
+        x_test = self.corpus.encode_text(tokenizer, [' '.join([word for word in word_sequence], length)
+        #x_test = np.asarray(x_test)
+        if self.corpus.binary_mode:
+            return self.corpus.class_names[int(round(model.predict_proba(x_test)[0][0]))]
+        else:
+            return self.corpus.class_names[model.predict_classes(x_test)[0]]
