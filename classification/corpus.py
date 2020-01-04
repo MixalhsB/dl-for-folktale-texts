@@ -35,8 +35,10 @@ from tqdm import tqdm
 class Corpus:
 
     def __init__(self, filename, language, test_split=0.2, seed=None, exclude_stop_words=False, binary_mode=False):
+        self.filename = filename
+        self.language = language
         self.binary_mode = binary_mode
-
+        
         if exclude_stop_words:
             self.stop_words = stopwords.words(language) + (['thee', 'thy', 'thou', 'ye'] if language == 'English'
                                                            else [])
@@ -122,6 +124,24 @@ class Corpus:
 
     def __iter__(self):
         return iter(self.stories)
+    
+    # returns the tale belonging to input atu
+    # needed for extracting unique tales between two corpora, which then will be added to one of the corpora
+    def get_tale_of_atu(self, atu):
+        for story in self.stories:
+            if story[2] == atu:
+                return story
+    
+    def get_gold_class_name(self, story):
+        this_story_id = story[1]
+        if this_story_id not in self.on_demand_story_ids_to_class_names:
+            for class_name in self.class_names:
+                for any_story in self.gold_classes[class_name]:
+                    other_story_id = any_story[1]
+                    if this_story_id == other_story_id:
+                        return class_name
+            self.on_demand_story_ids_to_class_names[this_story_id] = class_name
+        return self.on_demand_story_ids_to_class_names[this_story_id]
 
     #######################################
     #  NAIVE LENGTH-BASED CLASSIFICATION  #
@@ -196,17 +216,6 @@ class Corpus:
     def get_index_list_representation(self, story):
         word_sequence = self.extract_word_sequence(story)
         return [self.w2i_dict[word] for word in word_sequence]
-
-    def get_gold_class_name(self, story):
-        this_story_id = story[1]
-        if this_story_id not in self.on_demand_story_ids_to_class_names:
-            for class_name in self.class_names:
-                for any_story in self.gold_classes[class_name]:
-                    other_story_id = any_story[1]
-                    if this_story_id == other_story_id:
-                        return class_name
-            self.on_demand_story_ids_to_class_names[this_story_id] = class_name
-        return self.on_demand_story_ids_to_class_names[this_story_id]
 
     def get_train_and_test_data(self):
         x_test = np.array([self.get_index_list_representation(story) for story in self.test_stories])
@@ -464,68 +473,6 @@ class Corpus:
         return self.doc2vec_model_data
 
     #######################################
-    #         LDA TOPIC MODELLING         #
-    #######################################
-
-    def run_lda(self):
-        while True:
-            user_input = input('-> Choose number of topics (e.g. 7): ')
-            if user_input.isdigit():
-                num_topics = int(user_input)
-                if num_topics < 2:
-                    print('-> Number of topics must be at least 2.')
-                    continue
-                break
-            else:
-                print('-> Please enter a valid number.')
-
-        list_of_list_of_tokens = []
-        for story in self.stories:
-            raw_text = BeautifulSoup(story[4], "html.parser").text
-            word_sequence = self.tokenize(raw_text)
-            list_of_list_of_tokens.append(word_sequence)
-
-        dictionary_LDA = corpora.Dictionary(list_of_list_of_tokens)
-        dictionary_LDA.filter_extremes(no_below=3)
-
-        sample = [dictionary_LDA.doc2bow(list_of_tokens) for list_of_tokens in list_of_list_of_tokens]
-
-        lda_model = models.LdaModel(sample, num_topics=num_topics, id2word=dictionary_LDA, random_state=1,
-                                    passes=4, alpha='auto', eta='auto')
-
-        vis = pyLDAvis.gensim.prepare(topic_model=lda_model, corpus=sample, dictionary=dictionary_LDA,
-                                      sort_topics=False)
-        if not os.path.isdir('./temporary'):
-            os.mkdir('./temporary')
-        pyLDAvis.save_html(vis, './temporary/lda.html')
-
-        predominant_topics_dict = {}
-        for i in range(len(self.stories)):
-            predominant_topic = max(lda_model[sample[i]], key=lambda x: x[1])[0] + 1
-            try:
-                predominant_topics_dict[predominant_topic].append(i)
-            except KeyError:
-                predominant_topics_dict[predominant_topic] = [i]
-
-        print()
-        for i, topic in lda_model.show_topics(formatted=True, num_topics=num_topics, num_words=5):
-            print(str(i + 1) + ": " + topic)
-            print('This is the predominant topic of', len(predominant_topics_dict[i + 1]),
-                  'documents.' if len(predominant_topics_dict[i + 1]) != 1 else 'document.')
-            store_frequencies = defaultdict(int)
-            for story_corpus_index in predominant_topics_dict[i + 1]:
-                story = self.stories[story_corpus_index]
-                gold = self.get_gold_class_name(story)
-                store_frequencies[gold] += 1
-            max_freq = -1
-            max_arg = None
-            for class_name in store_frequencies:
-                if store_frequencies[class_name] > max_freq:
-                    max_freq = store_frequencies[class_name]
-                    max_arg = class_name
-            print(max_arg.upper(), 'is the most common tale category in this cluster.\n')
-
-    #######################################
     #        N-GRAM CLASSIFICATION        #
     #######################################
 
@@ -673,4 +620,66 @@ class Corpus:
     #    testX = np.asarray(testX)
     #    #testLabels = np.asarray(testLabels)
     #    _, acc = model.evaluate([testX,testX,testX], testLabels, verbose=0)
-    #    print('Test Accuracy: %.2f' % (acc*100))
+    #    print('Test Accuracy: %.2f' % (acc*100))    
+
+    #######################################
+    #         LDA TOPIC MODELLING         #
+    #######################################
+
+    def run_lda(self):
+        while True:
+            user_input = input('-> Choose number of topics (e.g. 7): ')
+            if user_input.isdigit():
+                num_topics = int(user_input)
+                if num_topics < 2:
+                    print('-> Number of topics must be at least 2.')
+                    continue
+                break
+            else:
+                print('-> Please enter a valid number.')
+
+        list_of_list_of_tokens = []
+        for story in self.stories:
+            raw_text = BeautifulSoup(story[4], "html.parser").text
+            word_sequence = self.tokenize(raw_text)
+            list_of_list_of_tokens.append(word_sequence)
+
+        dictionary_LDA = corpora.Dictionary(list_of_list_of_tokens)
+        dictionary_LDA.filter_extremes(no_below=3)
+
+        sample = [dictionary_LDA.doc2bow(list_of_tokens) for list_of_tokens in list_of_list_of_tokens]
+
+        lda_model = models.LdaModel(sample, num_topics=num_topics, id2word=dictionary_LDA, random_state=1,
+                                    passes=4, alpha='auto', eta='auto')
+
+        vis = pyLDAvis.gensim.prepare(topic_model=lda_model, corpus=sample, dictionary=dictionary_LDA,
+                                      sort_topics=False)
+        if not os.path.isdir('./temporary'):
+            os.mkdir('./temporary')
+        pyLDAvis.save_html(vis, './temporary/lda.html')
+
+        predominant_topics_dict = {}
+        for i in range(len(self.stories)):
+            predominant_topic = max(lda_model[sample[i]], key=lambda x: x[1])[0] + 1
+            try:
+                predominant_topics_dict[predominant_topic].append(i)
+            except KeyError:
+                predominant_topics_dict[predominant_topic] = [i]
+
+        print()
+        for i, topic in lda_model.show_topics(formatted=True, num_topics=num_topics, num_words=5):
+            print(str(i + 1) + ": " + topic)
+            print('This is the predominant topic of', len(predominant_topics_dict[i + 1]),
+                  'documents.' if len(predominant_topics_dict[i + 1]) != 1 else 'document.')
+            store_frequencies = defaultdict(int)
+            for story_corpus_index in predominant_topics_dict[i + 1]:
+                story = self.stories[story_corpus_index]
+                gold = self.get_gold_class_name(story)
+                store_frequencies[gold] += 1
+            max_freq = -1
+            max_arg = None
+            for class_name in store_frequencies:
+                if store_frequencies[class_name] > max_freq:
+                    max_freq = store_frequencies[class_name]
+                    max_arg = class_name
+            print(max_arg.upper(), 'is the most common tale category in this cluster.\n')
