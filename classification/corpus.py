@@ -38,6 +38,8 @@ class Corpus:
         self.filename = filename
         self.language = language
         self.binary_mode = binary_mode
+        self.seed = seed
+        self.test_split = test_split
         
         if exclude_stop_words:
             self.stop_words = stopwords.words(language) + (['thee', 'thy', 'thou', 'ye'] if language == 'English'
@@ -53,8 +55,6 @@ class Corpus:
         else:
             self.class_names = ('animal', 'magic', 'religious', 'realistic', 'ogre', 'jokes', 'formula')  # , 'UNKNOWN')
 
-        self.test_split = test_split
-
         def _get_number(atu_string):
             try:
                 atu_int = int(''.join(char for char in atu_string if char.isdigit()))
@@ -67,9 +67,6 @@ class Corpus:
 
         # Filtert jetzt UNKNOWN-Stories schon beim Einlesen des Korpus heraus:
         self.stories = [st for st in ast.literal_eval(dict_syntaxed_string)[language] if _get_number(st[2]) != -1]
-        if seed is not None:
-            random.seed(seed)
-        random.shuffle(self.stories)
 
         def _get_atu_range(class_name):
             if class_name == 'animal':
@@ -106,31 +103,38 @@ class Corpus:
 
         iter_over_class_specific_subsets = (_get_stories_of_class(class_name) for class_name in self.class_names)
 
-        self.gold_classes = {class_name: stories for class_name, stories in
-                             zip(self.class_names, iter_over_class_specific_subsets)}
         self.on_demand_story_ids_to_class_names = {}
-
-        self.w2i_dict = self.get_word_to_index_dict()
-
-        x_y_test_length = int(self.test_split * len(self.stories))
-        self.test_stories = self.stories[:x_y_test_length]
-        self.train_stories = self.stories[x_y_test_length:]
 
         self.avg_story_lengths = None
         self.simple_reuters_model = None
         self.book_model_data = (None, None, None, None, None)
         self.doc2vec_model_data = (None, None, None)
         self.ngram_model_data = (None, None, None)
-
+        
+        self.shuffle_stories_and_split_them()
+        self.w2i_dict = self.get_word_to_index_dict()
+        self.gold_classes = {class_name: stories for class_name, stories in
+                             zip(self.class_names, iter_over_class_specific_subsets)}
+        
     def __iter__(self):
         return iter(self.stories)
-    
+
+    def shuffle_stories_and_split_them(self):
+        if self.seed is not None:
+            random.seed(self.seed)
+        random.shuffle(self.stories)
+        x_y_test_length = int(self.test_split * len(self.stories))
+        self.test_stories = self.stories[:x_y_test_length]
+        self.train_stories = self.stories[x_y_test_length:]
+
     # returns the tale belonging to input atu
     # needed for extracting unique tales between two corpora, which then will be added to one of the corpora
-    def get_tale_of_atu(self, atu):
+    def get_stories_of_atu(self, atu):
+        result = []
         for story in self.stories:
             if story[2] == atu:
-                return story
+                result.append(story)
+        return result
     
     def get_gold_class_name(self, story):
         this_story_id = story[1]
@@ -142,6 +146,26 @@ class Corpus:
                         return class_name
             self.on_demand_story_ids_to_class_names[this_story_id] = class_name
         return self.on_demand_story_ids_to_class_names[this_story_id]
+    
+    def tokenize(self, text):
+
+        def _is_acceptable_token(possible_token):
+            for c in possible_token:
+                delimiter_chars = string.punctuation + string.whitespace
+                if not (c in delimiter_chars or unicodedata.category(c)[0] in 'ZP'):
+                    return True
+            return False
+
+        tokens = word_tokenize(text)
+        tokens = [tkn.lower() for tkn in tokens]
+        tokens = [tkn for tkn in tokens if _is_acceptable_token(tkn)]
+        tokens = [tkn for tkn in tokens if all(part_token not in self.stop_words for part_token in tkn.split("'"))]
+        return tokens
+
+    def extract_word_sequence(self, story):
+        html_text = story[4]
+        raw_text = BeautifulSoup(html_text, "html.parser").text
+        return self.tokenize(raw_text)
 
     #######################################
     #  NAIVE LENGTH-BASED CLASSIFICATION  #
@@ -168,26 +192,6 @@ class Corpus:
     #######################################
     #    SIMPLE REUTERS CLASSIFICATION    #
     #######################################
-
-    def tokenize(self, text):
-
-        def _is_acceptable_token(possible_token):
-            for c in possible_token:
-                delimiter_chars = string.punctuation + string.whitespace
-                if not (c in delimiter_chars or unicodedata.category(c)[0] in 'ZP'):
-                    return True
-            return False
-
-        tokens = word_tokenize(text)
-        tokens = [tkn.lower() for tkn in tokens]
-        tokens = [tkn for tkn in tokens if _is_acceptable_token(tkn)]
-        tokens = [tkn for tkn in tokens if all(part_token not in self.stop_words for part_token in tkn.split("'"))]
-        return tokens
-
-    def extract_word_sequence(self, story):
-        html_text = story[4]
-        raw_text = BeautifulSoup(html_text, "html.parser").text
-        return self.tokenize(raw_text)
 
     def get_word_occurrences(self):
         result = []
@@ -430,8 +434,8 @@ class Corpus:
     #######################################
 
     def create_trained_model_data_for_doc2vec_classifier(self):
-        vector_size_input = 175  # int(input("Enter vector size between 100 and 300: "))
-        window_size_input = 5  # int(input("Enter a window size (maximum number of context words) between 1 and 10: "))
+        vector_size_input = 300  # int(input("Enter vector size between 100 and 300: "))
+        # window_size_input = 10  # int(input("Enter a window size (maximum number of context words) between 1 and 10: "))
 
         tags_index = {class_name: i for i, class_name in enumerate(self.class_names)}
 
@@ -445,7 +449,7 @@ class Corpus:
         # Feature Vector
         cores = multiprocessing.cpu_count()
 
-        model_dbow = Doc2Vec(dm=1, window_size=window_size_input, vector_size=vector_size_input, negative=5, hs=0,
+        model_dbow = Doc2Vec(dm=1, vector_size=vector_size_input, negative=5, hs=0,
                              min_count=2, sample=0, workers=cores, alpha=0.025, min_alpha=0.001)
         model_dbow.build_vocab([x for x in tqdm(tagged_train_stories)])
 
@@ -592,7 +596,7 @@ class Corpus:
         trainLabels = np.asarray(trainLabels)
         model.fit([trainX, trainX, trainX],
                   trainLabels if self.binary_mode else to_categorical(trainLabels, len(self.class_names)),
-                  epochs=7, batch_size=16)
+                  epochs=4, batch_size=16) # originally epochs=7
         # save the model
         # model.save('model.h5')
         return model, tokenizer, length
