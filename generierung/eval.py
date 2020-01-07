@@ -7,7 +7,6 @@ from classifier import Classifier
 from corpus import Corpus
 from keras.preprocessing.sequence import pad_sequences
 
-
 class Generate:
 
     def __init__(self, model, tokenizer, seq_length, seed_text, n_words):
@@ -55,7 +54,7 @@ def load_doc(filename):
 def average_sentence_length(language, type):
     with open("../average_sentence_length.txt", encoding="utf8") as file:
         dictionary = eval(file.read())
-    return dictionary[type][language.capitalize()]
+    return dictionary[type][language.lower()]
 
 def min_max_random(language, type):
     with open("../min_max_tale_length.txt", encoding = "utf8") as file:
@@ -67,30 +66,49 @@ def min_max_random(language, type):
 
 class Eval:
 
-    def __init__(self, model, tokenizer, sequence_file, classifier):
+    def __init__(self, model, tokenizer, sequence_file, classifier, language, kind):
         self.model = load_model(model)
+        self.language = language
+        self.kind = kind
         self.tokenizer = load(open(tokenizer, "rb"))
         self.sequence = sequence_file
         self.classifier = classifier
+        self.right_dumb = 0
+        self.right_reu = 0
 
     def evaluate(self):
-        # LOOP: wieviele tales generieren und klassifizieren?
-        tale = ""
-        doc = load_doc(self.sequence)
-        lines = doc.split('\n')
-        seq_length = average_sentence_length(language, kind)
-        seed_text = lines[randint(0, len(lines))]
-        tale += seed_text
-        generated = Generate(self.model, self.tokenizer, seq_length, seed_text, min_max_random(language, kind))
-        tale += generated.generate_seq()
-        #klassifizieren
-        self.classifier.dumb_classify(tale)
-        self.classifier.simple_reuters_classify(tale)
-
+        #wieviele tales generieren und klassifizieren?
+        with open("eval.txt", "w+", encoding="utf-8") as f:
+            for i in range(0, 100):
+                tale = ""
+                doc = load_doc(self.sequence)
+                lines = doc.split('\n')
+                seq_length = average_sentence_length(self.language, self.kind)
+                seed_text = lines[randint(0, len(lines))]
+                tale += seed_text
+                generated = Generate(self.model, self.tokenizer, seq_length, seed_text, min_max_random(self.language, self.kind))
+                tale += generated.generate_seq()
+                #klassifizieren
+                if self.classifier.dumb_classify(tale) == "non-magic":
+                    self.right_dumb += 1
+                if self.classifier.simple_reuters_classify(tale) == "non-magic":
+                    self.right_reu += 1
+            p = (self.right_dumb/10)*100
+            f.write(str(p)+"% der "+str(self.language)+" "+str(self.kind)+ "wurden vom dumb classifier korrekt als "
+                                                                           "non-magic tales klassifiziert.")
+            q = 100-p
+            f.write(str(q)+"% der "+str(self.language)+" "+str(self.kind)+" wurden vom dumb classifier falsch als "
+                                                                          "magic tales klassifiziert.")
+            p = (self.right_reu/10)*100
+            f.write(str(p)+"% der "+str(self.language)+" "+str(self.kind)+
+                  " wurden vom reuters classifier korrekt als non-magic tales klassifiziert.")
+            q = 100 - p
+            f.write(str(q)+"% der "+str(self.language)+" "+str(self.kind)+
+                  " wurden vom reuters classifier falsch als magic tales klassifiziert.")
 
 
 languages = ["german"]
-kinds = ["animaltales", "religioustales"]
+kinds = ["animaltales", "religioustales", "realistictales", "stupidogre", "formulatales", "jokes"]
 corpus = Corpus('../corpora.dict', 'German', seed=123, binary_mode=True)
 classifier = Classifier(corpus)
 for language in languages:
@@ -99,6 +117,6 @@ for language in languages:
         tokenizer = "tokenizer/"+language+"_"+kind+"_tokenizer.pkl"
         sequence_file = "sequence/"+language+"_"+kind+"_sequences.txt"
         print("Evaluate "+language+" "+kind)
-        evalu = Eval(model, tokenizer, sequence_file, classifier)
+        evalu = Eval(model, tokenizer, sequence_file, classifier, language, kind)
         evalu.evaluate()
 
