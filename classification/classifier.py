@@ -29,9 +29,8 @@ class Classifier:
             i2list_representation = [self.corpus.w2i_dict[word] if word in self.corpus.w2i_dict else max_index + 1
                                      for word in word_sequence]
             list_of_i2list_representations.append(i2list_representation)
-        x_test = list_of_i2list_representations
         tokenizer = Tokenizer(num_words=10000)
-        bin_x_test = np.array([tokenizer.sequences_to_matrix(i2list_rep, mode='binary') for i2list_rep in x_test])
+        bin_x_test = tokenizer.sequences_to_matrix(list_of_i2list_representations, mode='binary')
         if self.corpus.binary_mode:
             predictions = model.predict_proba(bin_x_test)
             return [self.corpus.class_names[int(round(predictions[i][0]))] for i in range(len(bin_x_test))]
