@@ -1,3 +1,4 @@
+from time import sleep
 from bs4 import BeautifulSoup
 from json.decoder import JSONDecodeError
 import googletrans
@@ -115,7 +116,7 @@ def translate_tales_for_training_data(ground_corpus, other_corpus):
             pass
 
     if len(other_stories) > 0:
-        print("\nThe ground corpus was extended from a total number of "
+        print("\nThe ground corpus' training data was extended from a total number of "
               + str(previous_len) + " tales to now " + str(previous_len + n)
               + " tales in total.\n")
 
@@ -138,18 +139,16 @@ def translate_save_tales(ground_corpus, other_corpus):
     
     save_file = str(ground_language) + "_" + str(other_language) + ".txt"
     
-    if os.path.isfile(save_file):
-        with open(save_file) as s_f:
+    if os.path.isfile('pretranslated/' + save_file):
+        with open('pretranslated/' + save_file) as s_f:
             n=0
             for line in s_f:
                 story = line.split("\t")
                 ground_corpus.train_stories.append(story)
                 n+=1
-            
-
 
     else:
-        with open(save_file, 'w', encoding= 'utf-8') as s_f:
+        with open('pretranslated/' + save_file, 'w', encoding= 'utf-8') as s_f:
             
             n = 0
                 
@@ -166,21 +165,23 @@ def translate_save_tales(ground_corpus, other_corpus):
                     new_story = trans_title, story[1], story[2], story[3], trans_tale
                     ground_corpus.train_stories.append(new_story)
                     n += 1
-
-                    s_f.write(str(trans_title) + "\t" +
-                              str(story[1]) + "\t" +
-                              str(story[2]) + "\t" +
-                              str(story[3]) + "\t" +
-                              str(trans_tale) + "\n")
-                        
                 except JSONDecodeError:
                     print('error while trying to connect to Google Translate')
                     pass
 
-    if len(other_stories) > 0:
-        print("\nThe ground corpus was extended from a total number of "
-                + str(previous_len) + " tales to now " + str(previous_len + n)
-                 + " tales in total " + "\n")
+                s_f.write(str(trans_title) + "\t" +
+                          str(story[1]) + "\t" +
+                          str(story[2]) + "\t" +
+                          str(story[3]) + "\t" +
+                          str(trans_tale) + "\n")
+
+        if len(other_stories) > 0:
+            print("\nThe ground corpus' training data was extended from a total number of "
+                    + str(previous_len) + " tales to now " + str(previous_len + n)
+                     + " tales in total " + "\n")
+
+
+
 
 German = Corpus('../corpora.dict', 'German', seed=123, binary_mode=True)
 English = Corpus('../corpora.dict', 'English', seed=123, binary_mode=True)
