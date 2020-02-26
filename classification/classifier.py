@@ -1,5 +1,3 @@
-# OLD NAME: classifier
-
 from keras.preprocessing.text import Tokenizer
 from bs4 import BeautifulSoup
 from gensim.models.doc2vec import TaggedDocument

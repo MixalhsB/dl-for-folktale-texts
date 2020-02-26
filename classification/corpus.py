@@ -1,5 +1,3 @@
-# OLD NAME: corpus
-
 import ast
 import numpy as np
 import random
@@ -34,14 +32,19 @@ from tqdm import tqdm
 
 class Corpus:
 
-    def __init__(self, filename, language, test_split=0.2, seed=None, exclude_stop_words=False, binary_mode=False):
+    def __init__(self, filename, language, test_split=0.2, seed=None, exclude_stop_words=False, binary_mode=False,
+                 dummy_mode=False, to_be_extended_later=False):
         self.filename = filename
         self.language = language
-        self.binary_mode = binary_mode
-        self.seed = seed
-        self.test_split = test_split
         
-        if exclude_stop_words:
+        self.test_split = test_split
+        self.seed = seed
+        self.exclude_stop_words = exclude_stop_words
+        self.binary_mode = binary_mode
+        self.dummy_mode = dummy_mode
+        self.to_be_extended_later = to_be_extended_later
+        
+        if self.exclude_stop_words and self.language is not None:
             self.stop_words = stopwords.words(language) + (['thee', 'thy', 'thou', 'ye'] if language == 'English'
                                                            else [])
         else:
@@ -66,7 +69,10 @@ class Corpus:
                 return -1
 
         # Filtert jetzt UNKNOWN-Stories schon beim Einlesen des Korpus heraus:
-        self.stories = [st for st in ast.literal_eval(dict_syntaxed_string)[language] if _get_number(st[2]) != -1]
+        if self.language is not None:
+            self.stories = [st for st in ast.literal_eval(dict_syntaxed_string)[language] if _get_number(st[2]) != -1]
+        else:
+            self.stories = []
 
         def _get_atu_range(class_name):
             if class_name == 'animal':
@@ -101,7 +107,7 @@ class Corpus:
         def _get_stories_of_class(class_name):
             return [story for story in self.stories if _is_atu_in_range(story[2], class_name)]
 
-        iter_over_class_specific_subsets = (_get_stories_of_class(class_name) for class_name in self.class_names)
+        self.iter_over_class_specific_subsets = (_get_stories_of_class(class_name) for class_name in self.class_names)
 
         self.on_demand_story_ids_to_class_names = {}
 
@@ -111,10 +117,12 @@ class Corpus:
         self.doc2vec_model_data = (None, None, None)
         self.ngram_model_data = (None, None, None)
         
-        self.shuffle_stories_and_split_them()
-        self.w2i_dict = self.get_word_to_index_dict()
-        self.gold_classes = {class_name: stories for class_name, stories in
-                             zip(self.class_names, iter_over_class_specific_subsets)}
+        if not self.dummy_mode:
+            self.shuffle_stories_and_split_them()
+            if not self.to_be_extended_later:
+                self.w2i_dict = self.get_word_to_index_dict()
+                self.gold_classes = {class_name: stories for class_name, stories in
+                                     zip(self.class_names, self.iter_over_class_specific_subsets)}
         
     def __iter__(self):
         return iter(self.stories)

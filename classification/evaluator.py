@@ -1,5 +1,3 @@
-# OLD NAME: evaluator
-
 from sklearn import metrics
 
 
