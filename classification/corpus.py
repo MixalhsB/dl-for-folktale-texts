@@ -45,8 +45,11 @@ class Corpus:
         self.to_be_extended_later = to_be_extended_later
         
         if self.exclude_stop_words and self.language is not None:
-            self.stop_words = stopwords.words(language) + (['thee', 'thy', 'thou', 'ye'] if language == 'English'
-                                                           else [])
+            self.stop_words = stopwords.words(language)
+            if language == 'English': # some ad-hoc extensions
+                self.stop_words += ['thee', 'thy', 'thou', 'ye']
+            elif language == 'Italian': # some ad-hoc extensions
+                self.stop_words += ['d', 'egli', 'ella']
         else:
             self.stop_words = []
 
@@ -156,22 +159,30 @@ class Corpus:
         return self.on_demand_story_ids_to_class_names[this_story_id]
     
     def tokenize(self, text):
-
+        delimiter_chars = string.punctuation + string.whitespace
+        
+        def _is_punctuation_char(c):
+            return c in delimiter_chars or unicodedata.category(c)[0] in 'ZP'
+        
         def _is_acceptable_token(possible_token):
             for c in possible_token:
-                delimiter_chars = string.punctuation + string.whitespace
-                if not (c in delimiter_chars or unicodedata.category(c)[0] in 'ZP'):
+                if not _is_punctuation_char(c):
                     return True
             return False
-
+        
+        text = text.replace("'", ' ').replace('´', ' ').replace('\u2019', ' ') # replacing apostrophes by whitespace
+        
         tokens = word_tokenize(text)
         tokens = [tkn.lower() for tkn in tokens]
         tokens = [tkn for tkn in tokens if _is_acceptable_token(tkn)]
-        tokens = [tkn for tkn in tokens if all(part_token not in self.stop_words for part_token in tkn.split("'"))]
+        tokens = [tkn for tkn in tokens if tkn not in self.stop_words]
+        tokens = [''.join((c for c in tkn if not _is_punctuation_char(c))) for tkn in tokens]
+
         return tokens
 
     def extract_word_sequence(self, story):
         html_text = story[4]
+        html_text = ' <'.join(html_text.split('<'))
         raw_text = BeautifulSoup(html_text, "html.parser").text
         return self.tokenize(raw_text)
 
