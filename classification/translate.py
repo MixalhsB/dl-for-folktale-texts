@@ -186,8 +186,8 @@ def translate_save_tales(ground_corpus, other_corpus):
 
 
 
-German = Corpus('../corpora.dict', 'German', seed=123, binary_mode=True)
-English = Corpus('../corpora.dict', 'English', seed=123, binary_mode=True)
+# German = Corpus('../corpora.dict', 'German', seed=123, binary_mode=True)
+# English = Corpus('../corpora.dict', 'English', seed=123, binary_mode=True)
 
 #translate_tales_for_training_data(English,German)
 #print("hi")
