@@ -19,7 +19,7 @@ if __name__ == '__main__':
     while binary_mode_string.lower() not in ('y', 'n'):
         binary_mode_string = input('Binary classification (y) or multi-class (n)? ')
     while add_translated_string.lower() not in ('y', 'n'):
-        add_translated_string = input('Add missing tales Google-translated from other languages to the corpus (y/n)? ')
+        add_translated_string = input('Extend training data by tales Google-translated from other languages (y/n)? ')
     while not number_of_runs.isdigit() or int(number_of_runs) < 1:
         number_of_runs = input('Enter number of runs: ')
     print()
@@ -38,7 +38,8 @@ if __name__ == '__main__':
         list_of_classifiers.append(classifier.Classifier(list_of_corpora[i]))
     
     if add_translated:
-        for ground_corpus in list_of_corpora:
+        for i, ground_corpus in enumerate(list_of_corpora):
+            print('Extending by translated tales in progress:', i + 1, '/', len(list_of_corpora))
             empty_dummy_corpus = corpus.Corpus('../corpora.dict', None, dummy_mode=True)
             empty_dummy_corpus.language = ground_corpus.language
             empty_dummy_corpus.train_stories = []

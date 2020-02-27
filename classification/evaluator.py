@@ -10,7 +10,7 @@ class Evaluator:
     def evaluate(self):
         predicted_class_names, true_class_names = [], []
         for i, (current_corpus, current_classify_instance) in enumerate(zip(self.list_of_corpora, self.list_of_classify_instances)):
-            print('\nRUN NUMBER ' + str(i + 1) + ':\n')
+            print('\nRUN NUMBER ' + str(i + 1) + '...\n')
             predicted_class_names += current_classify_instance([story[4] for story in current_corpus.test_stories])
             true_class_names += [current_corpus.get_gold_class_name(story) for story in current_corpus.test_stories]
         print('\nTrue class names:\n', true_class_names, '\n')
