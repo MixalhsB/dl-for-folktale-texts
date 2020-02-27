@@ -58,7 +58,6 @@ if __name__ == '__main__':
             ground_corpus.w2i_dict = ground_corpus.get_word_to_index_dict()
             ground_corpus.gold_classes = {class_name: stories for class_name, stories in
                                           zip(ground_corpus.class_names, ground_corpus.iter_over_class_specific_subsets)}
-            print('\nOKOK:', len(ground_corpus.train_stories), '\n')
         
     eval_dumb = evaluator.Evaluator(list_of_corpora, [clsf.dumb_classify for clsf in list_of_classifiers])
     eval_length = evaluator.Evaluator(list_of_corpora, [clsf.length_classify for clsf in list_of_classifiers])
