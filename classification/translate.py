@@ -144,6 +144,9 @@ def translate_save_tales(ground_corpus, other_corpus):
             n=0
             for line in s_f:
                 story = line.split("\t")
+                assert story[1].isdigit()
+                story[1] = int(story[1])
+                story = tuple(story)
                 ground_corpus.train_stories.append(story)
                 n+=1
 
