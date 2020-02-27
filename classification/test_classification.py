@@ -9,7 +9,7 @@ if __name__ == '__main__':
     languages = ('English', 'German', 'Spanish', 'Danish', 'Italian', 'French')
                       # we are *not* considering these langs -> ('Polish', 'Dutch', 'Russian', 'Hungarian', 'Czech')
     
-    language_any_cap = add_translated_string = exclude_sw_string = binary_mode_string = number_of_runs = ''
+    language_any_cap = add_translated_string = exclude_sw_string = binary_mode_string = number_of_runs_string = ''
     
     print()
     while language_any_cap.lower().capitalize() not in languages:
@@ -20,18 +20,19 @@ if __name__ == '__main__':
         binary_mode_string = input('Binary classification (y) or multi-class (n)? ')
     while add_translated_string.lower() not in ('y', 'n'):
         add_translated_string = input('Extend training data by tales Google-translated from other languages (y/n)? ')
-    while not number_of_runs.isdigit() or int(number_of_runs) < 1:
-        number_of_runs = input('Enter number of runs: ')
+    while not number_of_runs_string.isdigit() or int(number_of_runs_string) < 1:
+        number_of_runs_string = input('Enter number of runs: ')
     print()
     
     exclude_stop_words = True if exclude_sw_string == 'y' else False
     binary_mode = True if binary_mode_string == 'y' else False
     add_translated = True if add_translated_string == 'y' else False
+    number_of_runs = int(number_of_runs_string)
     
     list_of_corpora = []
     list_of_classifiers = []
     
-    for i in range(int(number_of_runs)):
+    for i in range(number_of_runs):
         list_of_corpora.append(corpus.Corpus('../corpora.dict', language_any_cap.lower().capitalize(), seed=None,
                                              exclude_stop_words=exclude_stop_words, binary_mode=binary_mode,
                                              to_be_extended_later=add_translated))
@@ -93,6 +94,8 @@ if __name__ == '__main__':
     print('\nFinished computing N-GRAM classification.\n')
     
     print(resulting_string)
-    with open('output.txt', 'w', encoding='utf-8') as f:
+    output_filename = language_any_cap.lower() + '_' + exclude_sw_string + '_' + binary_mode_string + '_'
+    output_filename += add_translated_string + '_' + number_of_runs_string + '.txt'
+    with open(output_filename, 'w', encoding='utf-8') as f:
         f.write(resulting_string)
-    print('\nSuccessfully exported results to "output.txt".')
+    print('\nSuccessfully exported results to "' + output_filename + '".')

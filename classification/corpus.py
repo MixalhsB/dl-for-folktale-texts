@@ -458,10 +458,10 @@ class Corpus:
 
         tags_index = {class_name: i for i, class_name in enumerate(self.class_names)}
 
-        tagged_train_stories = [TaggedDocument(self.tokenize(BeautifulSoup(story[4], "html.parser").text),
+        tagged_train_stories = [TaggedDocument(self.extract_word_sequence(story),
                                                tags=[tags_index[self.get_gold_class_name(story)]])
                                 for story in self.train_stories]
-        tagged_test_stories = [TaggedDocument(self.tokenize(BeautifulSoup(story[4], "html.parser").text),
+        tagged_test_stories = [TaggedDocument(self.extract_word_sequence(story),
                                               tags=[tags_index[self.get_gold_class_name(story)]])
                                for story in self.test_stories]
 
@@ -508,7 +508,7 @@ class Corpus:
         for class_name in self.gold_classes:
             for story in self.gold_classes[class_name]:
                 if story in self.train_stories:
-                    train_lines.append(story[4])
+                    train_lines.append(' '.join(self.extract_word_sequence(story)))
 
                     if self.binary_mode:
                         if class_name == 'magic':
@@ -663,8 +663,7 @@ class Corpus:
 
         list_of_list_of_tokens = []
         for story in self.stories:
-            raw_text = BeautifulSoup(story[4], "html.parser").text
-            word_sequence = self.tokenize(raw_text)
+            word_sequence = self.extract_word_sequence(story)
             list_of_list_of_tokens.append(word_sequence)
 
         dictionary_LDA = corpora.Dictionary(list_of_list_of_tokens)

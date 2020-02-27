@@ -22,8 +22,7 @@ class Classifier:
         model = self.corpus.get_trained_model_for_simple_reuters_classifier()
         list_of_i2list_representations = []
         for html_text in list_of_html_texts:
-            raw_text = BeautifulSoup(html_text, "html.parser").text
-            word_sequence = self.corpus.tokenize(raw_text)
+            word_sequence = self.corpus.extract_word_sequence((None, None, None, None, html_text))
             max_index = max(self.corpus.w2i_dict.values())
             i2list_representation = [self.corpus.w2i_dict[word] if word in self.corpus.w2i_dict else max_index + 1
                                      for word in word_sequence]
@@ -41,8 +40,7 @@ class Classifier:
         model, vocab, tokenizer, max_length, encode_docs = self.corpus.get_trained_model_data_for_book_classifier()
         docs_to_be_encoded = []
         for html_text in list_of_html_texts:
-            raw_text = BeautifulSoup(html_text, "html.parser").text
-            word_sequence = self.corpus.tokenize(raw_text)
+            word_sequence = self.corpus.extract_word_sequence((None, None, None, None, html_text))
             docs_to_be_encoded.append(' '.join([word for word in word_sequence if word in vocab]))
         x_test = encode_docs(tokenizer, max_length, docs_to_be_encoded)
         if self.corpus.binary_mode:
@@ -56,8 +54,7 @@ class Classifier:
         result = []
         lengths = self.corpus.get_avg_story_lengths()
         for html_text in list_of_html_texts:
-            raw_text = BeautifulSoup(html_text, "html.parser").text
-            word_sequence = self.corpus.tokenize(raw_text)
+            word_sequence = self.corpus.extract_word_sequence((None, None, None, None, html_text))
             this_length = len(word_sequence)
             comparison = [(abs(lengths[cn] - this_length), cn) for cn in lengths]
             comparison.sort()
@@ -68,8 +65,7 @@ class Classifier:
         model_dbow, logreg, vector_for_learning = self.corpus.get_trained_model_data_for_doc2vec_classifier()
         dummy_tagged_docs = []
         for html_text in list_of_html_texts:
-            raw_text = BeautifulSoup(html_text, "html.parser").text
-            word_sequence = self.corpus.tokenize(raw_text)
+            word_sequence = self.corpus.extract_word_sequence((None, None, None, None, html_text))
             dummy_tagged_docs.append(TaggedDocument(word_sequence, tags=[-1]))
         vector_representation = vector_for_learning(model_dbow, dummy_tagged_docs)
         predictions = logreg.predict(vector_representation[1])
@@ -79,8 +75,7 @@ class Classifier:
         model, tokenizer, length = self.corpus.get_ngram_model()
         docs_to_be_encoded = []
         for html_text in list_of_html_texts:
-            raw_text = BeautifulSoup(html_text, "html.parser").text
-            word_sequence = self.corpus.tokenize(raw_text)
+            word_sequence = self.corpus.extract_word_sequence((None, None, None, None, html_text))
             docs_to_be_encoded.append(' '.join([word for word in word_sequence]))
         x_test = self.corpus.encode_text(tokenizer, docs_to_be_encoded, length)
         # return [self.corpus.class_names[model.predict(x_test)[i]] for i in range(len(x_test))])
