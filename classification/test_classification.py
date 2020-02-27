@@ -50,6 +50,7 @@ if __name__ == '__main__':
                 translate.translate_save_tales(empty_dummy_corpus, other_language_dummy_corpus)
             
             assert len(empty_dummy_corpus.train_stories) >= len(ground_corpus.train_stories)
+            
             random.seed(ground_corpus.seed)
             sample_to_add = random.sample(empty_dummy_corpus.train_stories, len(ground_corpus.train_stories))
             ground_corpus.stories += sample_to_add
@@ -70,7 +71,7 @@ if __name__ == '__main__':
     resulting_string = '\nDUMB:\n'
     resulting_string += eval_dumb.evaluate() + '\n'
     print('\nFinished computing DUMB classification.\n')
-
+    
     resulting_string += '\nLENGTH:\n'
     resulting_string += eval_length.evaluate() + '\n'
     print('\nFinished computing LENGTH classification.\n')
@@ -92,3 +93,6 @@ if __name__ == '__main__':
     print('\nFinished computing N-GRAM classification.\n')
     
     print(resulting_string)
+    with open('output.txt', 'w', encoding='utf-8') as f:
+        f.write(resulting_string)
+    print('\nSuccessfully exported results to "output.txt".')
