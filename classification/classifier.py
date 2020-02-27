@@ -12,9 +12,10 @@ class Classifier:
 
     def dumb_classify(self, list_of_html_texts):
         result = []
+        class_names_probability_distribution = [self.corpus.get_gold_class_name(story) for story in self.corpus.train_stories]
         for html_text in list_of_html_texts:
             random.seed(hash(html_text))
-            result.append(random.choice(self.corpus.class_names))
+            result.append(random.choice(class_names_probability_distribution))
         return result
 
     def simple_reuters_classify(self, list_of_html_texts):
