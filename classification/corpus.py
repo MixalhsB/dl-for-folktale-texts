@@ -281,7 +281,7 @@ class Corpus:
             binary_transformed_data = self.get_binary_transformed_train_and_test_data(max_words)
             (bin_x_train, bin_y_train), (bin_x_test, bin_y_test) = binary_transformed_data
             model.fit(bin_x_train, bin_y_train, batch_size=(None if self.binary_mode else 32), epochs=2, verbose=1,
-                      validation_split=0.1)
+                      validation_split=0.0)
             self.simple_reuters_model = model
 
         return self.simple_reuters_model
@@ -428,7 +428,7 @@ class Corpus:
         model = self.define_model(vocab_size, max_length)
 
         # fit network
-        model.fit(Xtrain, ytrain, epochs=5, verbose=2, validation_split=0.1)
+        model.fit(Xtrain, ytrain, epochs=5, verbose=2, validation_split=0.0)
 
         # save the model
         # model.save('model.h5')
