@@ -3,6 +3,7 @@ import classifier
 import evaluator
 import translate
 import random
+import sys
 
 
 if __name__ == '__main__':
@@ -11,18 +12,33 @@ if __name__ == '__main__':
     
     language_any_cap = add_translated_string = exclude_sw_string = binary_mode_string = number_of_runs_string = ''
     
-    print()
-    while language_any_cap.lower().capitalize() not in languages:
-        language_any_cap = input('Enter language: ')
-    while exclude_sw_string.lower() not in ('y', 'n'):
-        exclude_sw_string = input('Exclude stopwords (y/n)? ')
-    while binary_mode_string.lower() not in ('y', 'n'):
-        binary_mode_string = input('Binary classification (y) or multi-class (n)? ')
-    while add_translated_string.lower() not in ('y', 'n'):
-        add_translated_string = input('Extend training data by tales Google-translated from other languages (y/n)? ')
-    while not number_of_runs_string.isdigit() or int(number_of_runs_string) < 1:
-        number_of_runs_string = input('Enter number of runs: ')
-    print()
+    if len(sys.argv) == 1:
+        print()
+        while language_any_cap.lower().capitalize() not in languages:
+            language_any_cap = input('Enter language: ')
+        while exclude_sw_string.lower() not in ('y', 'n'):
+            exclude_sw_string = input('Exclude stopwords (y/n)? ')
+        while binary_mode_string.lower() not in ('y', 'n'):
+            binary_mode_string = input('Binary classification (y) or multi-class (n)? ')
+        while add_translated_string.lower() not in ('y', 'n'):
+            add_translated_string = input('Extend training data by tales Google-translated from other languages (y/n)? ')
+        while not number_of_runs_string.isdigit() or int(number_of_runs_string) < 1:
+            number_of_runs_string = input('Enter number of runs: ')
+        print()
+    elif len(sys.argv) == 2:
+        try:
+            language_must_be_lower, exclude_sw_string, binary_mode_string, add_translated_string, \
+                                    number_of_runs_string = sys.argv[1].split('_')
+        except ValueError:
+            assert False
+        assert language_must_be_lower.islower() and language_must_be_lower.capitalize() in languages
+        language_any_cap = language_must_be_lower
+        assert exclude_sw_string in ('y', 'n')
+        assert binary_mode_string in ('y', 'n')
+        assert add_translated_string in ('y', 'n')
+        assert number_of_runs_string.isdigit() and int(number_of_runs_string) >= 1
+    else:
+        assert False
     
     exclude_stop_words = True if exclude_sw_string == 'y' else False
     binary_mode = True if binary_mode_string == 'y' else False
