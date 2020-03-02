@@ -62,35 +62,44 @@ if __name__ == '__main__':
             ground_corpus.gold_classes = {class_name: stories for class_name, stories in
                                           zip(ground_corpus.class_names, ground_corpus.iter_over_class_specific_subsets)}
         
-    eval_dumb = evaluator.Evaluator(list_of_corpora, [clsf.dumb_classify for clsf in list_of_classifiers])
-    eval_length = evaluator.Evaluator(list_of_corpora, [clsf.length_classify for clsf in list_of_classifiers])
-    eval_reuters = evaluator.Evaluator(list_of_corpora, [clsf.simple_reuters_classify for clsf in list_of_classifiers])
-    eval_book = evaluator.Evaluator(list_of_corpora, [clsf.book_inspired_classify for clsf in list_of_classifiers])
-    eval_doc2vec = evaluator.Evaluator(list_of_corpora, [clsf.doc2vec_classify for clsf in list_of_classifiers])
-    eval_ngram = evaluator.Evaluator(list_of_corpora, [clsf.ngram_classify for clsf in list_of_classifiers])
-    
     resulting_string = '\nDUMB:\n'
-    resulting_string += eval_dumb.evaluate() + '\n'
+    eval = evaluator.Evaluator(list_of_corpora, [clsf.dumb_classify for clsf in list_of_classifiers])
+    resulting_string += eval.evaluate() + '\n'
     print('\nFinished computing DUMB classification.\n')
     
     resulting_string += '\nLENGTH:\n'
-    resulting_string += eval_length.evaluate() + '\n'
+    eval = evaluator.Evaluator(list_of_corpora, [clsf.length_classify for clsf in list_of_classifiers])
+    resulting_string += eval.evaluate() + '\n'
+    for ground_corpus in list_of_corpora:
+        ground_corpus.avg_story_lengths = None
     print('\nFinished computing LENGTH classification.\n')
     
     resulting_string += '\nREUTERS:\n'
-    resulting_string += eval_reuters.evaluate() + '\n'
+    eval = evaluator.Evaluator(list_of_corpora, [clsf.simple_reuters_classify for clsf in list_of_classifiers])
+    resulting_string += eval.evaluate() + '\n'
+    for ground_corpus in list_of_corpora:
+        ground_corpus.simple_reuters_model = None
     print('\nFinished computing REUTERS classification.\n')
     
     resulting_string += '\nBOOK:\n'
-    resulting_string += eval_book.evaluate() + '\n'
+    eval = evaluator.Evaluator(list_of_corpora, [clsf.book_inspired_classify for clsf in list_of_classifiers])
+    resulting_string += eval.evaluate() + '\n'
+    for ground_corpus in list_of_corpora:
+        ground_corpus.book_model_data = (None, None, None, None, None)
     print('\nFinished computing BOOK classification.\n')
 
     resulting_string += '\nDOC2VEC:\n'
-    resulting_string += eval_doc2vec.evaluate() + '\n'
+    eval = evaluator.Evaluator(list_of_corpora, [clsf.doc2vec_classify for clsf in list_of_classifiers])
+    resulting_string += eval.evaluate() + '\n'
+    for ground_corpus in list_of_corpora:
+        ground_corpus.doc2vec_model_data = (None, None, None)
     print('\nFinished computing DOC2VEC classification.\n')
 
     resulting_string += '\nN-GRAM:\n'
-    resulting_string += eval_ngram.evaluate()
+    eval = evaluator.Evaluator(list_of_corpora, [clsf.ngram_classify for clsf in list_of_classifiers])
+    resulting_string += eval.evaluate()
+    for ground_corpus in list_of_corpora:
+        ground_corpus.ngram_model_data = (None, None, None)
     print('\nFinished computing N-GRAM classification.\n')
     
     print(resulting_string)
