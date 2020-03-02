@@ -3,7 +3,19 @@ import requests
 import re
 import urllib.parse
 from time import sleep
-from corpus_classes import Story
+
+class Story:
+	def __init__(self, title, index, atu_type, language, text):
+		#(Titel,Datenbanknummer,ATU Nummer,Sprache,Text)
+		self.title = title
+		self.index = index
+		self.atu_type = atu_type
+		self.language = language
+		self.text = text
+
+	def __str__(self):
+		# for backwardscompatibility
+		return str((self.title, self.index, self.atu_type, self.language, self.text))
 
 def get_story(link, corpus_language):
     global num_matching_errors
