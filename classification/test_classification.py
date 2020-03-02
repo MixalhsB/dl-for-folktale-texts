@@ -33,7 +33,7 @@ if __name__ == '__main__':
     list_of_classifiers = []
     
     for i in range(number_of_runs):
-        list_of_corpora.append(corpus.Corpus('../corpora.dict', language_any_cap.lower().capitalize(), seed=None,
+        list_of_corpora.append(corpus.Corpus('../corpora.dict', language_any_cap.lower().capitalize(), seed=i,
                                              exclude_stop_words=exclude_stop_words, binary_mode=binary_mode,
                                              to_be_extended_later=add_translated))
         list_of_classifiers.append(classifier.Classifier(list_of_corpora[i]))
@@ -52,6 +52,7 @@ if __name__ == '__main__':
             
             assert len(empty_dummy_corpus.train_stories) >= len(ground_corpus.train_stories)
             
+            assert i == ground_corpus.seed
             random.seed(ground_corpus.seed)
             sample_to_add = random.sample(empty_dummy_corpus.train_stories, len(ground_corpus.train_stories))
             ground_corpus.stories += sample_to_add
