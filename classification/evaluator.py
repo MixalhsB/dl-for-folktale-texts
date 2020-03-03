@@ -13,6 +13,13 @@ class Evaluator:
             print('\nRUN NUMBER ' + str(i + 1) + ' ...\n')
             predicted_class_names += current_classify_instance([story[4] for story in current_corpus.test_stories])
             true_class_names += [current_corpus.get_gold_class_name(story) for story in current_corpus.test_stories]
+            ### possibly prevent memory leaks:
+            current_corpus.avg_story_lengths = None
+            current_corpus.simple_reuters_model = None
+            current_corpus.book_model_data = (None, None, None, None, None)
+            current_corpus.doc2vec_model_data = (None, None, None)
+            current_corpus.ngram_model_data = (None, None, None)
+            ###
         print('\nTrue class names:\n', true_class_names, '\n')
         print('\nPredicted class names:\n', predicted_class_names, '\n')
 

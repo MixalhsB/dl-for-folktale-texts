@@ -78,50 +78,65 @@ if __name__ == '__main__':
             ground_corpus.w2i_dict = ground_corpus.get_word_to_index_dict()
             ground_corpus.gold_classes = {class_name: stories for class_name, stories in
                                           zip(ground_corpus.class_names, ground_corpus.iter_over_class_specific_subsets)}
-        
-    resulting_string = '\nDUMB:\n'
-    eval = evaluator.Evaluator(list_of_corpora, [clsf.dumb_classify for clsf in list_of_classifiers])
-    resulting_string += eval.evaluate() + '\n'
-    print('\nFinished computing DUMB classification.\n')
     
-    resulting_string += '\nLENGTH:\n'
+    output_filename = language_any_cap.lower() + '_' + exclude_sw_string + '_' + binary_mode_string + '_'
+    output_filename += add_translated_string + '_' + number_of_runs_string + '.txt'
+    resulting_string = ''
+    
+    eval = evaluator.Evaluator(list_of_corpora, [clsf.dumb_classify for clsf in list_of_classifiers])
+    to_be_added = '\nDUMB:\n' + eval.evaluate() + '\n'
+    with open(output_filename, 'w', encoding='utf-8') as f:
+        f.write(to_be_added)  
+    resulting_string += to_be_added
+    print('\nFinished computing DUMB classification.\n')
+  
     eval = evaluator.Evaluator(list_of_corpora, [clsf.length_classify for clsf in list_of_classifiers])
-    resulting_string += eval.evaluate() + '\n'
-    for ground_corpus in list_of_corpora:
-        ground_corpus.avg_story_lengths = None
+    to_be_added = '\nLENGTH:\n' + eval.evaluate() + '\n'
+    with open(output_filename, 'a', encoding='utf-8') as f:
+        f.write(to_be_added)  
+    resulting_string += to_be_added
+    # for ground_corpus in list_of_corpora:
+    #     ground_corpus.avg_story_lengths = None
     print('\nFinished computing LENGTH classification.\n')
     
-    resulting_string += '\nREUTERS:\n'
     eval = evaluator.Evaluator(list_of_corpora, [clsf.simple_reuters_classify for clsf in list_of_classifiers])
-    resulting_string += eval.evaluate() + '\n'
-    for ground_corpus in list_of_corpora:
-        ground_corpus.simple_reuters_model = None
+    to_be_added = '\nREUTERS:\n' + eval.evaluate() + '\n'
+    with open(output_filename, 'a', encoding='utf-8') as f:
+        f.write(to_be_added)  
+    resulting_string += to_be_added
+    # for ground_corpus in list_of_corpora:
+    #     ground_corpus.simple_reuters_model = None
     print('\nFinished computing REUTERS classification.\n')
     
-    resulting_string += '\nBOOK:\n'
     eval = evaluator.Evaluator(list_of_corpora, [clsf.book_inspired_classify for clsf in list_of_classifiers])
-    resulting_string += eval.evaluate() + '\n'
-    for ground_corpus in list_of_corpora:
-        ground_corpus.book_model_data = (None, None, None, None, None)
+    to_be_added = '\nBOOK:\n' + eval.evaluate() + '\n'
+    with open(output_filename, 'a', encoding='utf-8') as f:
+        f.write(to_be_added)  
+    resulting_string += to_be_added
+    # for ground_corpus in list_of_corpora:
+    #     ground_corpus.book_model_data = (None, None, None, None, None)
     print('\nFinished computing BOOK classification.\n')
 
-    resulting_string += '\nDOC2VEC:\n'
     eval = evaluator.Evaluator(list_of_corpora, [clsf.doc2vec_classify for clsf in list_of_classifiers])
-    resulting_string += eval.evaluate() + '\n'
-    for ground_corpus in list_of_corpora:
-        ground_corpus.doc2vec_model_data = (None, None, None)
+    to_be_added = '\nDOC2VEC:\n' + eval.evaluate() + '\n'
+    with open(output_filename, 'a', encoding='utf-8') as f:
+        f.write(to_be_added)  
+    resulting_string += to_be_added
+    # for ground_corpus in list_of_corpora:
+    #    ground_corpus.doc2vec_model_data = (None, None, None)
     print('\nFinished computing DOC2VEC classification.\n')
 
-    resulting_string += '\nN-GRAM:\n'
     eval = evaluator.Evaluator(list_of_corpora, [clsf.ngram_classify for clsf in list_of_classifiers])
-    resulting_string += eval.evaluate()
-    for ground_corpus in list_of_corpora:
-        ground_corpus.ngram_model_data = (None, None, None)
+    to_be_added = '\nN-GRAM:\n' + eval.evaluate() + '\n'
+    with open(output_filename, 'a', encoding='utf-8') as f:
+        f.write(to_be_added)  
+    resulting_string += to_be_added
+    # for ground_corpus in list_of_corpora:
+    #    ground_corpus.ngram_model_data = (None, None, None)
     print('\nFinished computing N-GRAM classification.\n')
     
     print(resulting_string)
-    output_filename = language_any_cap.lower() + '_' + exclude_sw_string + '_' + binary_mode_string + '_'
-    output_filename += add_translated_string + '_' + number_of_runs_string + '.txt'
+
     with open(output_filename, 'w', encoding='utf-8') as f:
         f.write(resulting_string)
     print('\nSuccessfully exported results to "' + output_filename + '".')
