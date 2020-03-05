@@ -170,7 +170,7 @@ def translate_save_tales(ground_corpus, other_corpus):
                     n += 1
                 except JSONDecodeError:
                     print('error while trying to connect to Google Translate')
-                    pass
+                    continue
 
                 s_f.write(str(trans_title) + "\t" +
                           str(story[1]) + "\t" +
