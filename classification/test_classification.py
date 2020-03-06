@@ -60,6 +60,7 @@ if __name__ == '__main__':
             empty_dummy_corpus = corpus.Corpus('../corpora.dict', None, dummy_mode=True)
             empty_dummy_corpus.language = ground_corpus.language
             empty_dummy_corpus.train_stories = []
+            
             for other_language in languages:
                 if other_language == ground_corpus.language:
                     continue
