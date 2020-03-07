@@ -1,5 +1,4 @@
 *.pyc
-*.txt
-!average_sentence_length.txt
-!classification/pretranslated/*.txt
+*.bat
+*.sh
 classification/temporary
