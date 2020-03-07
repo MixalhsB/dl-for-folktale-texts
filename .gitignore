@@ -1,4 +1,5 @@
-*.txt
-!corpora.txt
 *.pyc
+*.txt
+!average_sentence_length.txt
+!classification/pretranslated/*.txt
 classification/temporary
