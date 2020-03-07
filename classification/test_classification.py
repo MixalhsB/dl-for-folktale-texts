@@ -126,7 +126,7 @@ if __name__ == '__main__':
     # for ground_corpus in list_of_corpora:
     #    ground_corpus.doc2vec_model_data = (None, None, None)
     print('\nFinished computing DOC2VEC classification.\n')
-
+    
     eval = evaluator.Evaluator(list_of_corpora, [clsf.ngram_classify for clsf in list_of_classifiers])
     to_be_added = '\nN-GRAM:\n' + eval.evaluate() + '\n'
     with open(output_filename, 'a', encoding='utf-8') as f:
@@ -137,7 +137,4 @@ if __name__ == '__main__':
     print('\nFinished computing N-GRAM classification.\n')
     
     print(resulting_string)
-
-    with open(output_filename, 'w', encoding='utf-8') as f:
-        f.write(resulting_string)
     print('\nSuccessfully exported results to "' + output_filename + '".')
