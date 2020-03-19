@@ -90,7 +90,7 @@ if __name__ == '__main__':
         f.write(to_be_added)  
     resulting_string += to_be_added
     print('\nFinished computing DUMB classification.\n')
-  
+    
     eval = evaluator.Evaluator(list_of_corpora, [clsf.length_classify for clsf in list_of_classifiers])
     to_be_added = '\nLENGTH:\n' + eval.evaluate() + '\n'
     with open(output_filename, 'a', encoding='utf-8') as f:
@@ -117,7 +117,7 @@ if __name__ == '__main__':
     # for ground_corpus in list_of_corpora:
     #     ground_corpus.book_model_data = (None, None, None, None, None)
     print('\nFinished computing BOOK classification.\n')
-
+    
     eval = evaluator.Evaluator(list_of_corpora, [clsf.doc2vec_classify for clsf in list_of_classifiers])
     to_be_added = '\nDOC2VEC:\n' + eval.evaluate() + '\n'
     with open(output_filename, 'a', encoding='utf-8') as f:
