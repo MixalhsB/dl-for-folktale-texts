@@ -26,17 +26,17 @@ import sys
 # load doc into memory (training data sequences)
 def load_doc(filename):
     # open the file as read only
-    file = open(filename, 'r')
+    file = open(filename, 'r', encoding="UTF8")
     # read all text
     text = file.read()
     # close the file
     file.close()
     return text
 
-def average_sentence_length(language, type):
-    with open("../average_sentence_length.txt", encoding="utf8") as file:
-        dictionary = eval(file.read())
-    return dictionary[type][language]
+# def average_sentence_length(language, type):
+#     with open("../average_sentence_length.txt", encoding="utf8") as file:
+#         dictionary = eval(file.read())
+#     return dictionary[type][language]
 
 
 class Generate:
@@ -80,9 +80,9 @@ class Generate:
 while True:
     l = input("Enter a language: [E]nglish   [G]erman")
     if l == "E":
-        language = "english"
+        language = "English"
     elif l == "G":
-        language = "german"
+        language = "German"
     else:
         print("Wrong parameter specification!\nPlease try again.")
         continue
@@ -137,18 +137,19 @@ seq_length_title = 5 #len(lines_title[0].split()) - 1 model trained on set seque
 
 # load the models
 model = load_model("models/"+language+"_"+kind+'_model.h5')
-title_model = load_model("models/"+'German_title_model.h5')
+title_model = load_model("models/"+language + "_title_model.h5")
+#title_model = load_model("models/"+'German_title_model.h5')
 # load the tokenizers
 tokenizer = load(open("tokenizer/"+language+"_"+kind+"_tokenizer.pkl", 'rb'))
-title_tokenizer = load(open("tokenizer/German_title_tokenizer.pkl", 'rb'))
-
+#title_tokenizer = load(open("tokenizer/German_title_tokenizer.pkl", 'rb'))
+title_tokenizer = load(open("tokenizer/"+language+"_title_tokenizer.pkl", 'rb'))
 # select a seed text: random line of text from the input text
 # maybe the first line?
-# seed_text_title = lines_title[randint(0, len(lines_title))]
-# print(seed_text_title + '\n')
+seed_text_title = lines_title[randint(0, len(lines_title))]
+#print(seed_text_title + '\n')
 
 seed_text = lines[randint(0, len(lines))]
-print(seed_text + '\n')
+#print(seed_text + '\n')
 
 # generate new text
 # how long should it be? -> average length of a tale?
@@ -177,9 +178,9 @@ def min_max_random(language, type):
         return random.randrange(min, max)
 
 # generated = Generate(title_model, title_tokenizer, seq_length_title , seed_text_title, 5)
-generated = Generate(title_model, title_tokenizer, seq_length_title , seed_text, 5)
-print(generated.generate_seq())
-generated = Generate(model, tokenizer, seq_length, seed_text, avg_tale_length(language, kind, min_max_random(language, kind)))
+generated_title = Generate(title_model, title_tokenizer, seq_length_title , seed_text_title, 5)
+print("Title of the generated tale: ", generated_title.generate_seq())
+generated_text = Generate(model, tokenizer, seq_length, seed_text, avg_tale_length(language, kind, min_max_random(language, kind)))
 # generated = generate_seq(model, tokenizer, seq_length, seed_text, min_max_random(language, kind))
-print(generated.generate_seq())
+print("Text of the generated tale: ", generated_text.generate_seq())
 
