@@ -56,7 +56,7 @@ if __name__ == '__main__':
               != {ground_corpus.get_gold_class_name(st) for st in ground_corpus.train_stories}:
             ground_corpus.seed *= 1.5
             ground_corpus.shuffle_stories_and_split_them()
-            print('\n' + str(i) + ': Just had to reshuffle train-test split due to sparse data ...')
+            print('\n' + str(i) + ': Just had to re-shuffle train-test split due to sparse training data ...')
         list_of_classifiers.append(classifier.Classifier(list_of_corpora[i]))
     
     if add_translated:
