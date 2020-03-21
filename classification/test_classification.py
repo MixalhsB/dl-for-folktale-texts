@@ -52,6 +52,11 @@ if __name__ == '__main__':
         list_of_corpora.append(corpus.Corpus('../corpora.dict', language_any_cap.lower().capitalize(), seed=i,
                                              exclude_stop_words=exclude_stop_words, binary_mode=binary_mode,
                                              to_be_extended_later=add_translated))
+        while {ground_corpus.get_gold_class_name(st) for st in ground_corpus.stories} \
+              != {ground_corpus.get_gold_class_name(st) for st in ground_corpus.train_stories}:
+            ground_corpus.seed *= 1.5
+            ground_corpus.shuffle_stories_and_split_them()
+            print('\n' + str(i) + ': Just had to reshuffle train-test split due to sparse data ...')
         list_of_classifiers.append(classifier.Classifier(list_of_corpora[i]))
     
     if add_translated:
@@ -75,22 +80,11 @@ if __name__ == '__main__':
             ground_corpus.stories += sample_to_add
             ground_corpus.train_stories += sample_to_add
             
-            # assuming sparse-training-data problem will rarely/never occur for translation-extended corpora:
-            assert {ground_corpus.get_gold_class_name(st) for st in ground_corpus.stories} \
-                   == {ground_corpus.get_gold_class_name(st) for st in ground_corpus.train_stories}
-            
             random.seed(ground_corpus.seed)
             random.shuffle(ground_corpus.train_stories)
             ground_corpus.w2i_dict = ground_corpus.get_word_to_index_dict()
             ground_corpus.gold_classes = {class_name: stories for class_name, stories in
                                           zip(ground_corpus.class_names, ground_corpus.iter_over_class_specific_subsets)}
-    else:
-        for i, ground_corpus in enumerate(list_of_corpora):
-            while {ground_corpus.get_gold_class_name(st) for st in ground_corpus.stories} \
-                  != {ground_corpus.get_gold_class_name(st) for st in ground_corpus.train_stories}:
-                ground_corpus.seed *= 1.5
-                ground_corpus.shuffle_stories_and_split_them()
-                print(str(i) + ': Just had to reshuffle train-test split due to sparse data ...')
     
     output_filename = language_any_cap.lower() + '_' + exclude_sw_string + '_' + binary_mode_string + '_'
     output_filename += add_translated_string + '_' + number_of_runs_string + '.txt'
