@@ -48,16 +48,19 @@ if __name__ == '__main__':
     list_of_corpora = []
     list_of_classifiers = []
     
+    print('Initializing training and test corpora ...')
+    
     for i in range(number_of_runs):
         list_of_corpora.append(corpus.Corpus('../corpora.dict', language_any_cap.lower().capitalize(), seed=i,
                                              exclude_stop_words=exclude_stop_words, binary_mode=binary_mode,
                                              to_be_extended_later=add_translated))
+        ground_corpus = list_of_corpora[i]
         while {ground_corpus.get_gold_class_name(st) for st in ground_corpus.stories} \
               != {ground_corpus.get_gold_class_name(st) for st in ground_corpus.train_stories}:
             ground_corpus.seed *= 1.5
             ground_corpus.shuffle_stories_and_split_them()
             print('\n' + str(i) + ': Just had to re-shuffle train-test split due to sparse training data ...')
-        list_of_classifiers.append(classifier.Classifier(list_of_corpora[i]))
+        list_of_classifiers.append(classifier.Classifier(ground_corpus))
     
     if add_translated:
         for i, ground_corpus in enumerate(list_of_corpora):
