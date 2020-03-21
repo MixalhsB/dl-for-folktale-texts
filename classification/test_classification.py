@@ -86,12 +86,11 @@ if __name__ == '__main__':
                                           zip(ground_corpus.class_names, ground_corpus.iter_over_class_specific_subsets)}
     else:
         for i, ground_corpus in enumerate(list_of_corpora):
-            print(ground_corpus.seed)
             while {ground_corpus.get_gold_class_name(st) for st in ground_corpus.stories} \
                   != {ground_corpus.get_gold_class_name(st) for st in ground_corpus.train_stories}:
                 ground_corpus.seed *= 1.5
                 ground_corpus.shuffle_stories_and_split_them()
-                print('Just had to reshuffle train-test split due to sparse data ...')
+                print(str(i) + ': Just had to reshuffle train-test split due to sparse data ...')
     
     output_filename = language_any_cap.lower() + '_' + exclude_sw_string + '_' + binary_mode_string + '_'
     output_filename += add_translated_string + '_' + number_of_runs_string + '.txt'
