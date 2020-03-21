@@ -91,7 +91,6 @@ if __name__ == '__main__':
             
             assert len(empty_dummy_corpus.train_stories) >= len(ground_corpus.train_stories)
             
-            assert i == ground_corpus.seed
             random.seed(ground_corpus.seed)
             sample_to_add = random.sample(empty_dummy_corpus.train_stories, len(ground_corpus.train_stories))
             ground_corpus.stories += sample_to_add
