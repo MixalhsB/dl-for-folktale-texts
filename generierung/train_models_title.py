@@ -70,9 +70,6 @@ def trainmodel(doc, model_name):
     # separate into input and output
     sequences = array(sequences)
     print(sequences.shape)
-    # print("sequences: ", sequences)
-    # print(sequences[:, :-1])
-    # print(sequences[:, -1])
     X, y = sequences[:,:-1], sequences[:,-1]
     #one hot encode output word -> vector with lots of 0 and a 1 for the word itself
     y = to_categorical(y, num_classes=vocab_size)
@@ -83,11 +80,6 @@ def trainmodel(doc, model_name):
     model = define_model(vocab_size, seq_length)
     # fit model
     model.fit(X, y, batch_size=128, epochs=100)
-    # save the model to file
-    # model_name = in_filename.split("/")[-1]
-    # model_name = model_name[:-4] # txt Endung
-    # model_name = model_name.replace("sequences", "model")
-    # print(model_name)
     model.save('models/' + model_name + '.h5')
     # save the tokenizer
     #we need the mapping from words to integers when we load the model

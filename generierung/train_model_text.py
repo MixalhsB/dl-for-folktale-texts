@@ -41,24 +41,14 @@ def define_model(vocab_size, seq_length):
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
     # summarize defined model
     model.summary()
-    #plot_model(model, to_file='model.png', show_shapes=True)
+    plot_model(model, to_file='model.png', show_shapes=True)
     return model
 
 def trainmodel(in_filename):
 
     # load
-    #in_filename = 'republic_sequences.txt'
     doc = load_doc(in_filename)
     lines = doc.split('\n')
-    # print(lines)
-    # print([len(i.split()) for i in lines])
-    # lines = []
-    # stories = doc.split("\n\n")
-    # print(stories)
-    # letztes Element der Sequenzen ist '', deswegen :-1
-    # for item in stories[:-1]:
-    #    story = item.split("\n")
-    #    lines.append(story[1])
 
     # integer encode sequences of words
     tokenizer = Tokenizer() #create Tokenizer for encoding
@@ -76,19 +66,8 @@ def trainmodel(in_filename):
     #values from 1 to total number of words, so we need to +1
 
     # separate into input and output
-    # new_sequences = array()
-    #for list in sequences:
-
-        #list = array(list)
-       # new_sequences.append(list)
-    #print(new_sequences)
-    # print(len(sequences))
-    # print([len(i) for i in sequences])
     sequences = array(sequences)
     print(sequences.shape)
-    # print("sequences: ", sequences)
-    # print(sequences[:,:-1])
-    # print(sequences[:,-1])
     X, y = sequences[:,:-1], sequences[:,-1]
     #one hot encode output word -> vector with lots of 0 and a 1 for the word itself
     y = to_categorical(y, num_classes=vocab_size)
