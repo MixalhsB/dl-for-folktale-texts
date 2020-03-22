@@ -1,3 +1,4 @@
+from itertools import tee
 import corpus
 import classifier
 import evaluator
@@ -48,11 +49,32 @@ if __name__ == '__main__':
     list_of_corpora = []
     list_of_classifiers = []
     
+    print('\nInitializing training and test corpora ...')
+    
     for i in range(number_of_runs):
         list_of_corpora.append(corpus.Corpus('../corpora.dict', language_any_cap.lower().capitalize(), seed=i,
                                              exclude_stop_words=exclude_stop_words, binary_mode=binary_mode,
                                              to_be_extended_later=add_translated))
-        list_of_classifiers.append(classifier.Classifier(list_of_corpora[i]))
+        ground_corpus = list_of_corpora[i]
+        
+        def _create_temporary_gold_classes():
+            iter_copy, ground_corpus.iter_over_class_specific_subsets = tee(ground_corpus.iter_over_class_specific_subsets)
+            ground_corpus.gold_classes = {class_name: stories for class_name, stories in
+                                          zip(ground_corpus.class_names, iter_copy)}
+        
+        def _delete_temporary_gold_classes():
+            ground_corpus.gold_classes = None
+        
+        _create_temporary_gold_classes()
+        while {ground_corpus.get_gold_class_name(st) for st in ground_corpus.stories} \
+              != {ground_corpus.get_gold_class_name(st) for st in ground_corpus.train_stories}:
+            ground_corpus.seed *= 1.5
+            ground_corpus.shuffle_stories_and_split_them()
+            print('\n' + str(i) + ': Just had to re-shuffle train-test split due to sparse training data ...\n')
+            _create_temporary_gold_classes()
+        _delete_temporary_gold_classes()
+        
+        list_of_classifiers.append(classifier.Classifier(ground_corpus))
     
     if add_translated:
         for i, ground_corpus in enumerate(list_of_corpora):
@@ -69,11 +91,11 @@ if __name__ == '__main__':
             
             assert len(empty_dummy_corpus.train_stories) >= len(ground_corpus.train_stories)
             
-            assert i == ground_corpus.seed
             random.seed(ground_corpus.seed)
             sample_to_add = random.sample(empty_dummy_corpus.train_stories, len(ground_corpus.train_stories))
             ground_corpus.stories += sample_to_add
             ground_corpus.train_stories += sample_to_add
+            
             random.seed(ground_corpus.seed)
             random.shuffle(ground_corpus.train_stories)
             ground_corpus.w2i_dict = ground_corpus.get_word_to_index_dict()
