@@ -25,7 +25,6 @@ def clean_doc(doc):
     # prepare regex for char filtering
     re_punc = re.compile('[%s]' % re.escape('''"#$%&'()*+, -/:;<=>@[\]^_`{|}~'''))
     # remove punctuation from each word
-    #TODO remove punctuation here
     tokens = [re_punc.sub('', w) for w in tokens]
     # remove remaining tokens that are not alphabetic
     # DON'T uncomment this operation -> leads to inconsistent sequence lengths
@@ -41,15 +40,6 @@ def clean_doc(doc):
 def save_doc(lines, filename):
     title_sequences = lines[0]
     text_sequences = lines[1]
-    # length = len(title)
-    # data = ""
-    # wieso wurde hier ueber die Titellaenge iteriert?
-    # dadurch gehen Textsequenzen verloren!
-    # for i in range(0,length):
-        # data += title[i] + "\n" + text[i] + "\n\n"
-    # with open(filename, 'w+', encoding = 'utf-8') as f:
-    #    f.write(data)
-    # print("seq length in save doc", [len(i.split()) for i in text_sequences])
     data = '\n'.join(title_sequences)
     # print(data)
     file = open(filename[:-4] + "_title.txt", 'w', encoding='utf-8')
@@ -62,7 +52,6 @@ def save_doc(lines, filename):
     file.write(data)
     file.close()
 
-    # print([len(i.split()) for i in text_sequences])
 
 def average_sentence_length(language, type):
     with open("average_sentence_length.txt", encoding="utf8") as file:
