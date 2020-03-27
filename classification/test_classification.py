@@ -65,14 +65,16 @@ if __name__ == '__main__':
         def _delete_temporary_gold_classes():
             ground_corpus.gold_classes = None
         
-        _create_temporary_gold_classes()
+        if ground_corpus.to_be_extended_later:
+            _create_temporary_gold_classes()
         while {ground_corpus.get_gold_class_name(st) for st in ground_corpus.stories} \
               != {ground_corpus.get_gold_class_name(st) for st in ground_corpus.train_stories}:
             ground_corpus.seed *= 1.5
             ground_corpus.shuffle_stories_and_split_them()
             print('\n' + str(i) + ': Just had to re-shuffle train-test split due to sparse training data ...\n')
             _create_temporary_gold_classes()
-        _delete_temporary_gold_classes()
+        if ground_corpus.to_be_extended_later:
+            _delete_temporary_gold_classes()
         
         list_of_classifiers.append(classifier.Classifier(ground_corpus))
     
