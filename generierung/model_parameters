@@ -2,10 +2,31 @@ model parameters
 --German--
 Animaltales: loss:1.1117311771238958;accuracy:0.7150684931579427	params:dict_items([('epochs', 85), ('LSTM_neurons1', 64), ('LSTM_neurons2', 147), ('Dense_neurons', 91), ('activation1', 'elu'), ('activation2', 'softmax')])
 Religioustales: loss: 1.884797297294031;accuracy: 0.5264301231855245;Parameters: dict_items([('epochs', 49), ('LSTM_neurons1', 106), ('LSTM_neurons2', 158), ('Dense_neurons', 181), ('activation1', 'elu'), ('activation2', 'softmax')])
-Realistictales:
+Realistictales: loss: 2.941515762265779;accuracy: 0.3232395;Parameters: dict_items([('epochs', 66), ('LSTM_neurons1', 187), ('LSTM_neurons2', 194), ('Dense_neurons', 191), ('activation1', 'relu'), ('activation2', 'softmax')])
 Stupid Ogre: loss: 0.7262592092753967;accuracy: 0.8818066694807936;Parameters: dict_items([('epochs', 99), ('LSTM_neurons1', 78), ('LSTM_neurons2', 193), ('Dense_neurons', 171), ('activation1', 'tanh'), ('activation2', 'softmax')])
 Jokes: loss: 1.5407913165810423;accuracy: 0.6174681951628688;Parameters: dict_items([('epochs', 93), ('LSTM_neurons1', 100), ('LSTM_neurons2', 153), ('Dense_neurons', 129), ('activation1', 'relu'), ('activation2', 'softmax')])
 Formulatales: loss: 0.9763669754961942;accuracy: 0.7755102042659389;Parameters: dict_items([('epochs', 87), ('LSTM_neurons1', 13), ('LSTM_neurons2', 138), ('Dense_neurons', 149), ('activation1', 'elu'), ('activation2', 'softmax')])
 
 --English--
 Animaltales: loss: 1.4548501444739723;accuracy: 0.6320037799751861;Parameters: dict_items([('epochs', 73), ('LSTM_neurons1', 44), ('LSTM_neurons2', 68), ('Dense_neurons', 91), ('activation1', 'elu'), ('activation2', 'softmax')])
+Religioustales: loss: 0.5460056355183461;accuracy: 0.8886414254500958;Parameters: dict_items([('epochs', 92), ('LSTM_neurons1', 87), ('LSTM_neurons2', 198), ('Dense_neurons', 194), ('activation1', 'relu'), ('activation2', 'softmax')])
+Realistictales: loss: 1.2280403033587246;accuracy: 0.6829863;Parameters: dict_items([('epochs', 70), ('LSTM_neurons1', 81), ('LSTM_neurons2', 147), ('Dense_neurons', 127), ('activation1', 'relu'), ('activation2', 'softmax')])
+Stupid Ogre: loss: 1.5367490326052478;accuracy: 0.6178825;Parameters: dict_items([('epochs', 78), ('LSTM_neurons1', 39), ('LSTM_neurons2', 131), ('Dense_neurons', 132), ('activation1', 'elu'), ('activation2', 'softmax')])
+Jokes: loss: 1.3088372551872394;accuracy: 0.66768384;Parameters: dict_items([('epochs', 96), ('LSTM_neurons1', 42), ('LSTM_neurons2', 177), ('Dense_neurons', 42), ('activation1', 'elu'), ('activation2', 'softmax')])
+Formulatales: loss: 1.345308749206761;accuracy: 0.6897997;Parameters: dict_items([('epochs', 95), ('LSTM_neurons1', 160), ('LSTM_neurons2', 69), ('Dense_neurons', 136), ('activation1', 'tanh'), ('activation2', 'softmax')])
+
+--French--
+Animaltales: loss: 1.3492359290641889;accuracy: 0.6689357161521912;Parameters: dict_items([('epochs', 93), ('LSTM_neurons1', 171), ('LSTM_neurons2', 56), ('Dense_neurons', 181), ('activation1', 'elu'), ('activation2', 'softmax')])
+Religioustales: loss: 0.8006118057755863;accuracy: 0.8243137001991272;Parameters: dict_items([('epochs', 83), ('LSTM_neurons1', 86), ('LSTM_neurons2', 183), ('Dense_neurons', 142), ('activation1', 'elu'), ('activation2', 'softmax')])
+Realistictales: loss: 0.8591103695005605;accuracy: 0.794610321521759;Parameters: dict_items([('epochs', 78), ('LSTM_neurons1', 26), ('LSTM_neurons2', 123), ('Dense_neurons', 166), ('activation1', 'elu'), ('activation2', 'softmax')])
+Stupid Ogre:
+Jokes: loss: 2.071271169745042;accuracy: 0.4819934666156769;Parameters: dict_items([('epochs', 89), ('LSTM_neurons1', 13), ('LSTM_neurons2', 28), ('Dense_neurons', 129), ('activation1', 'elu'), ('activation2', 'softmax')])
+Formulatales: loss: 2.063283803130199;accuracy: 0.35181645;Parameters: dict_items([('epochs', 87), ('LSTM_neurons1', 49), ('LSTM_neurons2', 92), ('Dense_neurons', 151), ('activation1', 'elu'), ('activation2', 'softmax')])
+
+--Spanish--
+Animaltales: loss: 2.0213657303860315;accuracy: 0.5528484582901001;Parameters: dict_items([('epochs', 90), ('LSTM_neurons1', 97), ('LSTM_neurons2', 107), ('Dense_neurons', 127), ('activation1', 'tanh'), ('activation2', 'softmax')])
+Religioustales: loss: 1.4329613125337717;accuracy: 0.6323584914207458;Parameters: dict_items([('epochs', 84), ('LSTM_neurons1', 141), ('LSTM_neurons2', 148), ('Dense_neurons', 151), ('activation1', 'elu'), ('activation2', 'softmax')])
+Realistictales: loss: 2.9008455457158275;accuracy: 0.33249565958976746;Parameters: dict_items([('epochs', 52), ('LSTM_neurons1', 48), ('LSTM_neurons2', 106), ('Dense_neurons', 98), ('activation1', 'relu'), ('activation2', 'softmax')])
+Stupid Ogre: loss: 0.957683148598784;accuracy: 0.7763033;Parameters: dict_items([('epochs', 87), ('LSTM_neurons1', 180), ('LSTM_neurons2', 159), ('Dense_neurons', 188), ('activation1', 'elu'), ('activation2', 'softmax')])
+Jokes: loss: 0.785437720188504;accuracy: 0.8042632937431335;Parameters: dict_items([('epochs', 82), ('LSTM_neurons1', 75), ('LSTM_neurons2', 141), ('Dense_neurons', 134), ('activation1', 'elu'), ('activation2', 'softmax')])
+Formulatales: loss: 1.9135628649953302;accuracy: 0.5480649471282959;Parameters: dict_items([('epochs', 88), ('LSTM_neurons1', 105), ('LSTM_neurons2', 99), ('Dense_neurons', 180), ('activation1', 'tanh'), ('activation2', 'softmax')])

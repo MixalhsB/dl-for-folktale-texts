@@ -61,11 +61,15 @@ class Generate:
 
 # for interaction with the user in the console
 while True:
-    l = input("Enter a language: [E]nglish   [G]erman")
+    l = input("Enter a language: [E]nglish   [G]erman   [F]rench    [S]panish")
     if l == "E":
         language = "English"
     elif l == "G":
         language = "German"
+    elif l == "F":
+        language = "French"
+    elif l == "S":
+        language = "Spanish"
     else:
         print("Wrong parameter specification!\nPlease try again.")
         continue
